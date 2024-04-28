@@ -176,3 +176,39 @@ button:focus {
   transform: scale(1.1); /* Makes the text slightly larger */
   color: #36D7B7; /* Change color on hover, use your theme color */
 }
+
+
+.landing-page button {
+  padding: 10px 20px; /* Adjust padding as needed */
+  font-size: 1.2rem; /* Set the font size */
+  color: #fff; /* Set text color */
+  background-color: #007bff; /* Adjust background color as needed */
+  border: none;
+  border-radius: 5px; /* Rounded corners for aesthetics */
+  cursor: pointer;
+  transition: background-color 0.3s ease; /* Transition for hover effect */
+  width: 200px; /* Width of the button */
+  height: 50px; /* Height of the button */
+  display: inline-block; /* Allows setting a width and height */
+  text-align: center; /* Ensures text is centered */
+  line-height: 50px; /* Centers the text vertically */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: Adds a subtle shadow for depth */
+}
+
+.landing-page button:hover {
+  background-color: #0056b3; /* Darker shade on hover */
+}
+
+.signup-message {
+  margin-top: 20px; /* Adjust the margin as needed */
+  text-align: center;
+}
+
+.signup-message a {
+  color: #007bff; /* Use your theme color */
+  text-decoration: none;
+}
+
+.signup-message a:hover {
+  text-decoration: underline;
+}
