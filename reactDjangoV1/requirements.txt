@@ -1,0 +1,6 @@
+beautifulsoup4
+Django
+requests
+undetected-chromedriver==2.0.0
+django-cors-headers
+djangorestframework

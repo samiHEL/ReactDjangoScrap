@@ -1,0 +1,133 @@
+body, html {
+  height: 100%;
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+.background {
+  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: 0;  
+}
+
+
+
+@keyframes gradientBG {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+
+.form-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  position: relative;  
+  z-index: 1;  
+}
+
+.form-box {
+  background: rgba(255, 255, 255, 0.8);
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  width: 300px; 
+  z-index: 1;
+}
+input, button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 20px;
+  border: none;
+  outline: none;
+  transition: transform 0.2s;
+}
+
+button:hover {
+  transform: scale(1.1);
+}
+
+button:focus {
+  transform: scale(1.1);
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 20px;
+  z-index: 2; 
+}
+
+.app-name {
+  font-size: 24px; /* Taille du texte */
+  font-weight: bold; /* Rend le texte en gras */
+  color: #553125; /* Couleur du texte, choisissez ce qui convient à votre palette */
+  padding: 10px 20px;
+  border: 3px solid #23a6d5; /* Bordure solide avec une couleur contrastée */
+  border-radius: 10px; /* Bordures arrondies */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Ombre subtile pour un effet 3D */
+  justify-content: space-between;
+  transition: transform 0.3s, box-shadow 0.3s; /* Animation pour transform et ombre */
+}
+
+.app-name:hover {
+  transform: scale(1.05); /* Grossit légèrement au survol */
+  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15); /* Ombre plus prononcée au survol */
+}
+
+.menu {
+  display: flex;
+  gap: 20px;
+}
+
+.menu a, .menu span {
+  text-decoration: none;
+  color: white;
+  font-size: 18px;
+}
+
+.loader,
+.loader:after {
+  border-radius: 50%;
+  width: 10em;
+  height: 10em;
+}
+.loader {
+  margin: 60px auto;
+  font-size: 10px;
+  position: relative;
+  text-indent: -9999em;
+  border-top: 1.1em solid rgba(255, 255, 255, 0.2);
+  border-right: 1.1em solid rgba(255, 255, 255, 0.2);
+  border-bottom: 1.1em solid rgba(255, 255, 255, 0.2);
+  border-left: 1.1em solid #ffffff;
+  transform: translateZ(0);
+  animation: load8 1.1s infinite linear;
+}
+
+@keyframes load8 {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+
