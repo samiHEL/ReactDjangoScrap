@@ -92,7 +92,7 @@ import Contact from './Contact';
 import Home from './Home';
 import Scrap from './Scrap';
 import './App.css'
-
+import LandingPage from './LandingPage'
 function App() {
   const [username, setUsername] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -101,15 +101,16 @@ function App() {
     setUsername(username);
     setIsLoggedIn(true);
   };
-
   return (
     <Router>
       <div className="background">
         <NavBar username={username} />
         <Routes>
+          <Route path="/" element={<LandingPage isLoggedIn={isLoggedIn} />} />
           <Route path="/login" element={<Home onLogin={handleLogin} />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/scrap" element={isLoggedIn ? <Scrap /> : <Navigate to="/login" replace />} />
+          // ... other routes
         </Routes>
       </div>
     </Router>
