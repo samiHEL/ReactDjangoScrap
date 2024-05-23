@@ -7,6 +7,7 @@ const Scrap = () => {
   const [brand, setBrand] = useState('');
   const [city, setCity] = useState('');
   const [loading, setLoading] = useState(false);  // État pour le chargement
+  const [scrapType, setScrapType] = useState('');  // État pour le type de scraping
 
   const handleSubmit = () => {
     if (!brand || !city) {
@@ -14,7 +15,19 @@ const Scrap = () => {
       return;
     }
     setLoading(true);  // Commence le chargement
-    axios.post('http://localhost:8000/api/submit', { brand, city }, { responseType: 'blob' })
+    let apiRoute = '';
+    switch(scrapType) {
+      case 'medium':
+        apiRoute = 'http://localhost:8000/api/submit_medium';
+        break;
+      case 'premium':
+        apiRoute = 'http://localhost:8000/api/submit_prenium';
+        break;
+      default:
+        apiRoute = 'http://localhost:8000/api/submit';
+    }
+
+    axios.post(apiRoute, { brand, city }, { responseType: 'blob' })
       .then(response => {
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement('a');
@@ -31,16 +44,34 @@ const Scrap = () => {
       });
   };
 
+  const renderForm = () => (
+    <div className="form-box">
+      <input type="text" value={brand} onChange={e => setBrand(e.target.value)} placeholder="Enseigne à scraper" />
+      <input type="text" value={city} onChange={e => setCity(e.target.value)} placeholder="Nom de la Ville" />
+      <button onClick={handleSubmit} disabled={loading}>
+        Submit
+      </button>
+      {loading && <BeatLoader size={15} color={"#36D7B7"} />}  
+    </div>
+  );
+
   return (
     <div className="form-container">
-      <div className="form-box">
-        <input type="text" value={brand} onChange={e => setBrand(e.target.value)} placeholder="Enseigne à scraper" />
-        <input type="text" value={city} onChange={e => setCity(e.target.value)} placeholder="Nom de la Ville" />
-        <button onClick={handleSubmit} disabled={loading}>
-          Submit
-        </button>
-        {loading && <BeatLoader size={15} color={"#36D7B7"} />}  
-      </div>
+      {!scrapType ? (
+        <div className="button-container">
+          <div className="button-block">
+            <button className="glow-on-hover" onClick={() => setScrapType('basic')}>Scrap Basique</button>
+          </div>
+          <div className="button-block">
+            <button className="glow-on-hover" onClick={() => setScrapType('medium')}>Scrap Medium</button>
+          </div>
+          <div className="button-block">
+            <button className="glow-on-hover" onClick={() => setScrapType('premium')}>Scrap Premium</button>
+          </div>
+        </div>
+      ) : (
+        renderForm()
+      )}
     </div>
   );
 };
