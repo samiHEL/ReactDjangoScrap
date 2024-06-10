@@ -1,10 +1,22 @@
+# from django.contrib import admin
+# from .models import UserProfile, Ticket, Purchase
+
+# class UserProfileAdmin(admin.ModelAdmin):
+#     list_display = ['user']
+
+# admin.site.register(UserProfile, UserProfileAdmin)
+
+# class TicketAdmin(admin.ModelAdmin):
+#     list_display = ['user', 'quantity']
+
+# admin.site.register(Ticket, TicketAdmin)
+
+# class PurchaseAdmin(admin.ModelAdmin):
+#     list_display = ['user', 'tickets_purchased', 'amount', 'purchase_date']
+#     list_filter = ['purchase_date']
+
+# admin.site.register(Purchase, PurchaseAdmin)
 from django.contrib import admin
-from .models import FormInfo
+from .models import Profile
 
-class FormInfoAdmin(admin.ModelAdmin):
-    list_display = ['user', 'brand', 'city']  # Champs à afficher dans la liste
-    search_fields = ['brand', 'city']  # Champs pour la recherche
-    list_filter = ['brand', 'city']  # Filtres disponibles
-
-admin.site.register(FormInfo, FormInfoAdmin)
-
+admin.site.register(Profile)

@@ -14,6 +14,7 @@ const NavBar = ({ username }) => {
         )}
         <Link to="/scrap">Scrap</Link>
         <Link to="/contact">Contact</Link>
+        <Link to="/shop">Shop</Link>
       </div>
     </div>
   );

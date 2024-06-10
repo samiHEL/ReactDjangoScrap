@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import axiosInstance from './axiosConfig';
 
 const Login = ({ onLogin }) => {
   const [username, setUsername] = useState('');
@@ -7,8 +8,17 @@ const Login = ({ onLogin }) => {
   const navigate = useNavigate();
 
   const handleLogin = () => {
-    onLogin(username);
-    navigate('/scrap'); // Redirect to scrapping page after login
+    axiosInstance.post('/api/login', { username, password })
+      .then(response => {
+        alert('Login successful');
+        const { token } = response.data;
+        localStorage.setItem('token', token);
+        onLogin(username);
+        navigate('/scrap'); // Redirect to scrapping page after login
+      })
+      .catch(error => {
+        alert('Login failed: ' + error.response.data);
+      });
   };
 
   return (

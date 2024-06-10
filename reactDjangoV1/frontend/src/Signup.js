@@ -1,16 +1,22 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axiosInstance from './axiosConfig';
 
 const Signup = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
   const navigate = useNavigate();
 
   const handleSignup = () => {
-    // Add logic for signup here
-
-    // Navigate to login page after signup
-    navigate('/login');
+    axiosInstance.post('/api/signup', { username, password, email })
+      .then(response => {
+        alert('Signup successful');
+        navigate('/login'); // Navigate to login page after signup
+      })
+      .catch(error => {
+        alert('Signup failed: ' + error.response.data);
+      });
   };
 
   return (
@@ -27,6 +33,12 @@ const Signup = () => {
           value={password}
           onChange={e => setPassword(e.target.value)}
           placeholder="Password"
+        />
+        <input
+          type="email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          placeholder="Email"
         />
         <button onClick={handleSignup}>Sign Up</button>
       </div>

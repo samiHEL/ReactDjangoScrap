@@ -5,8 +5,11 @@ import Contact from './Contact';
 import Login from './Login';
 import Signup from './Signup';
 import Scrap from './Scrap';
+import Shop from './Shop';
 import './App.css';
-import LandingPage from './LandingPage'
+import LandingPage from './LandingPage';
+import axios from 'axios';
+
 function App() {
   const [username, setUsername] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -16,10 +19,15 @@ function App() {
     setIsLoggedIn(true);
   };
 
-
   const handleLogout = () => {
-    setUsername('');
-    setIsLoggedIn(false);
+    axios.post('http://localhost:8000/api/logout', {}, { withCredentials: true })
+      .then(response => {
+        setUsername('');
+        setIsLoggedIn(false);
+      })
+      .catch(error => {
+        alert('Logout failed: ' + error.message);
+      });
   };
 
   return (
@@ -32,6 +40,7 @@ function App() {
           <Route path="/signup" element={isLoggedIn ? <Navigate to="/scrap" replace /> : <Signup />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/scrap" element={isLoggedIn ? <Scrap /> : <Navigate to="/login" replace />} />
+          <Route path="/shop" element={isLoggedIn ? <Shop /> : <Navigate to="/login" replace />} />
         </Routes>
       </div>
     </Router>

@@ -1,34 +1,40 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import axiosInstance from './axiosConfig';
 import './App.css';
-import { BeatLoader } from 'react-spinners';  // Importer le spinner de react-spinners
+import { BeatLoader } from 'react-spinners';
 
 const Scrap = () => {
   const [brand, setBrand] = useState('');
   const [city, setCity] = useState('');
-  const [loading, setLoading] = useState(false);  // État pour le chargement
-  const [scrapType, setScrapType] = useState('');  // État pour le type de scraping
+  const [loading, setLoading] = useState(false);
+  const [scrapType, setScrapType] = useState('');
 
   const handleSubmit = () => {
     if (!brand || !city) {
       alert('Tous les champs doivent être remplis.');
       return;
     }
-    setLoading(true);  // Commence le chargement
+    setLoading(true);
     let apiRoute = '';
     switch(scrapType) {
       case 'medium':
-        apiRoute = 'http://localhost:8000/api/submit_medium';
+        apiRoute = '/api/submit_form_medium';
         break;
       case 'premium':
-        apiRoute = 'http://localhost:8000/api/submit_prenium';
+        apiRoute = '/api/submit_form_prenium';
         break;
       default:
-        apiRoute = 'http://localhost:8000/api/submit';
+        apiRoute = '/api/submit_form_basique';
     }
 
-    axios.post(apiRoute, { brand, city }, { responseType: 'blob' })
+    axiosInstance.post(apiRoute, { brand, city }, {
+      headers: {
+        'Authorization': `Token ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      }
+    })
       .then(response => {
+        alert(response.data.message);
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement('a');
         link.href = url;
@@ -36,11 +42,11 @@ const Scrap = () => {
         document.body.appendChild(link);
         link.click();
         link.parentNode.removeChild(link);
-        setLoading(false);  // Arrête le chargement après téléchargement
+        setLoading(false);
       })
       .catch(error => {
-        alert('Submission failed: ' + error.message);
-        setLoading(false);  // Arrête le chargement en cas d'erreur
+        alert('Submission failed: ' + error.response.data.message);
+        setLoading(false);
       });
   };
 
@@ -60,7 +66,7 @@ const Scrap = () => {
       {!scrapType ? (
         <div className="button-container">
           <div className="button-block">
-            <button className="glow-on-hover" onClick={() => setScrapType('basic')}>Scrap Basique</button>
+            <button className="glow-on-hover" onClick={() => setScrapType('basique')}>Scrap Basique</button>
           </div>
           <div className="button-block">
             <button className="glow-on-hover" onClick={() => setScrapType('medium')}>Scrap Medium</button>
