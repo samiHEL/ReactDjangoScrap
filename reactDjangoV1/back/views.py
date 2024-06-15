@@ -480,6 +480,8 @@ def submit_form_basique(request):
                         #fermer la page chrome
                         response = HttpResponse()
                         response['Content-Disposition'] = 'attachment; filename='+enseigne+'.csv'
+                        print("REPONSEEEE")
+                        print(response)
                         # Create the CSV writer using the HttpResponse as the "file"
                         writer = csv.writer(response)
                         writer.writerow(['Nom Magasin', 'Type','Adresse','Numero Tel'])

@@ -33,3 +33,14 @@ Authorization: Token c217c667d1c686d3d8d503bdc93d7c6fa24b60ec
 GET http://127.0.0.1:8000/api/test_token
 Content-Type: application/json
 Authorization: token xxx
+
+###
+# Submit form basique
+POST http://127.0.0.1:8000/api/submit_form_basique
+Content-Type: application/json
+Authorization: Token xxx
+
+{
+  "brand": "Carrefour",
+  "city": "Paris"
+}
