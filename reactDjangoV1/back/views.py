@@ -1,6 +1,6 @@
 from django.contrib.auth import authenticate, login
 from django.http import JsonResponse
-from rest_framework.decorators import api_view,permission_classes
+from rest_framework.decorators import api_view, permission_classes
 from django.contrib.auth.models import User
 from random import randint
 from django.http import HttpResponse
@@ -26,8 +26,6 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth.models import User
 
-
-
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
@@ -38,8 +36,8 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 
-from .serializers import UserSerializer
-from .models import Profile  # Importer le modèle Profile
+from .serializers import UserSerializer, HistorySerializer
+from .models import Profile, History
 from django.db import IntegrityError
 from rest_framework.permissions import AllowAny
 options = Options()
@@ -75,6 +73,11 @@ def login(request):
     token, created = Token.objects.get_or_create(user=user)
     serializer = UserSerializer(user)
     return Response({'token': token.key, 'user': serializer.data})
+@api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+def logout_view(request):
+    request.user.auth_token.delete()
+    return Response({'message': 'Logout successful'}, status=200)
 
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
@@ -96,6 +99,14 @@ def buy_tickets(request):
     
     return Response({'message': 'Invalid number of tickets'}, status=status.HTTP_400_BAD_REQUEST)
 
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+def get_history(request):
+    user = request.user
+    history_entries = History.objects.filter(user=user).order_by('-id')
+    serializer = HistorySerializer(history_entries, many=True)
+    return Response(serializer.data)
+
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
 def submit_form_medium(request):
@@ -109,23 +120,25 @@ def submit_form_medium(request):
         user.profile.tickets -= 1
         user.profile.save()
         print("medium")
-        #driver = uc.Chrome(options=options)
-        # driver = uc.Chrome()
-        #recup donées
         enseigne = request.data.get('brand')
         ville = request.data.get('city')
-        url2="https://www.google.com/search?q="+enseigne+"+"+ville+"&rlz=1C5GCEM_en&biw=1848&bih=968&tbm=lcl&ei=apkhZLSKGsbVkdUP1oabuAY&ved=0ahUKEwi058D5mvz9AhXGaqQEHVbDBmcQ4dUDCAg&uact=5&oq="+enseigne+"+"+ville+"&gs_lcp=Cg1nd3Mtd2l6LWxvY2FsEAMyCAgAEIAEELEDMgUIABCABDIFCAAQgAQyBQgAEIAEMgUIABCABDIFCAAQgAQyBQgAEIAEMgUIABCABDIFCAAQgAQyBQgAEIAEOgcIABCKBRBDOgYIABAWEB46CwgAEIAEELEDEIMBOgoIABCKBRCxAxBDUP8KWOjchgFgjN6GAWgHcAB4AIABfIgB-AySAQQxOC4ymAEAoAEBsAEAwAEB&sclient=gws-wiz-local#rlfi=hd:;si:;mv:[[72.59981891874918,78.7458826694124],[24.315754054065685,-46.76192983058759]];start:{page}"
-        pages = range(0,40,20)
-        MAG=[]
-        PHONE=[]
-        TYPE=[]
-        ADR=[]
-        ZIP=[]
-        CITY=[]
-        WEB=[]
-        HORAIRE=[]
-        IMAGE=[]
-        # Setup WebDriver options
+
+        # Enregistrer l'historique
+        History.objects.create(user=user, ville=ville, magasin=enseigne, nb_ticket_en_cours=user.profile.tickets, type_scrap='medium')
+
+        # Suite du code de scraping...
+        url2 = "https://www.google.com/search?q=" + enseigne + "+" + ville + "&rlz=1C5GCEM_en&biw=1848&bih=968&tbm=lcl&ei=apkhZLSKGsbVkdUP1oabuAY&ved=0ahUKEwi058D5mvz9AhXGaqQEHVbDBmcQ4dUDCAg&uact=5&oq=" + enseigne + "+" + ville + "&gs_lcp=Cg1nd3Mtd2l6LWxvY2FsEAMyCAgAEIAEELEDMgUIABCABDIFCAAQgAQyBQgAEIAEMgUIABCABDIFCAAQgAQyBQgAEIAEMgUIABCABDIFCAAQgAQyBQgAEIAEOgcIABCKBRBDOgYIABAWEB46CwgAEIAEELEDEIMBOgoIABCKBRCxAxBDUP8KWOjchgFgjN6GAWgHcAB4AIABfIgB-AySAQQxOC4ymAEAoAEBsAEAwAEB&sclient=gws-wiz-local#rlfi=hd:;si:;mv:[[72.59981891874918,78.7458826694124],[24.315754054065685,-46.76192983058759]];start:{page}"
+        pages = range(0, 40, 20)
+        MAG = []
+        PHONE = []
+        TYPE = []
+        ADR = []
+        ZIP = []
+        CITY = []
+        WEB = []
+        HORAIRE = []
+        IMAGE = []
+
         options = FirefoxOptions()
         options.add_argument("--headless")
         service = FirefoxService()
@@ -134,109 +147,104 @@ def submit_form_medium(request):
             try:
                 driver.get(url2)
                 time.sleep(1)
-                #driver.save_screenshot("screenshot1.png")
                 back = driver.find_elements(By.CSS_SELECTOR, "div[class='lssxud']")[1]
                 back.click()
 
                 for page in pages:
-                        print("page")
-                        print(page)
-                        driver.get(url2.format(page=page,ville=ville))
-                        time.sleep(2)
-                        soup = BeautifulSoup(driver.page_source, 'html.parser')
-                        time.sleep(1)    
+                    print("page")
+                    print(page)
+                    driver.get(url2.format(page=page, ville=ville))
+                    time.sleep(2)
+                    soup = BeautifulSoup(driver.page_source, 'html.parser')
+                    time.sleep(1)
 
-                        stores_verif= soup.find_all("div", class_="rllt__details")
-                        stores= driver.find_elements(By.CSS_SELECTOR, "div[class='rllt__details']")
-                        if stores_verif ==[]:
-                            break
-                        print("------")
+                    stores_verif = soup.find_all("div", class_="rllt__details")
+                    stores = driver.find_elements(By.CSS_SELECTOR, "div[class='rllt__details']")
+                    if stores_verif == []:
+                        break
+                    print("------")
 
-                        for x in range(23):
-                            stores2= driver.find_elements(By.CSS_SELECTOR, "div[class='rllt__details']")
+                    for x in range(23):
+                        stores2 = driver.find_elements(By.CSS_SELECTOR, "div[class='rllt__details']")
+                        time.sleep(0.5)
+                        try:
+                            stores2[x].click()
+                            soup2 = BeautifulSoup(driver.page_source, 'html.parser')
                             time.sleep(0.5)
                             try:
-                                stores2[x].click()
-                                soup2 = BeautifulSoup(driver.page_source, 'html.parser')
-                                time.sleep(0.5)
-                                try:
-                                    adr_complete=soup2.find("div", {"data-attrid": "kc:/location/location:address"}).text
-                                except:
-                                    adr_complete=""
-                                try:
-                                    name=soup2.find("h2", {"data-dtype": "d3ifr"}).text
-                                except:
-                                    name=""
-                                try:
-                                    type=soup2.find("span", class_="YhemCb").text
-                                except:
-                                    type=""
-                                try:
-                                    horaire=soup2.find("table", class_="WgFkxc").text
-                                except:
-                                    horaire=""
-                                try:
-                                    jours_semaine = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']
-                                except:
-                                    jours_semaine=""
-                                
-                                # Utilisez des expressions régulières pour extraire les jours et les heures
-                                try:
-                                    pattern = rf'({"|".join(jours_semaine)})((?:\d{{2}}:\d{{2}}–\d{{2}}:\d{{2}}|Fermé))+'
-                                    matches = re.findall(pattern, horaire)
-                                    horaires = {jour: heures if "Fermé" not in heures else "Fermé" for jour, heures in matches}
-                                    horaires_json = json.dumps(horaires, ensure_ascii=False)
-                                except:
-                                    horaires_json=""
-                                try:
-                                    zip_code=adr_complete.split(",")[1].split(" ")[1]
-                                except:
-                                    zip_code=""
-                                try:
-                                    city=adr_complete.split(",")[1].split(" ")[2]
-                                except:
-                                    city=""
-                                image_url=""
-                                try:
-                                    style=soup2.find("button", {"data-clid": "local-photo-browser"}).find("div").get("style")
-                                    parts = style.split("url(")
-                                    image_url = parts[1].strip(")\"'")
-                                except:
-                                    img="no"
-                                try:
-                                    #phone=soup2.find("a", {"data-dtype": "d3ph"}).text
-                                    phone=soup2.find("span", class_="LrzXr zdqRlf kno-fv").text
-                                except:
-                                    phone=""
-                                try:
-                                    web=soup2.find("a", class_="xFAlBc").text
-                                except:
-                                    web=""
-                                print(f"{name};{zip_code};{city};{adr_complete};{phone};{web};{horaires_json};{type};{image_url} ")
-                                MAG.append(name)
-                                ZIP.append(zip_code)
-                                CITY.append(city)
-                                ADR.append(adr_complete)
-                                PHONE.append(phone)
-                                WEB.append(web)
-                                HORAIRE.append(horaires_json)
-                                TYPE.append(type)
-                                IMAGE.append(image_url)
+                                adr_complete = soup2.find("div", {"data-attrid": "kc:/location/location:address"}).text
                             except:
-                                    print("erreur mag")
-                                    continue
+                                adr_complete = ""
+                            try:
+                                name = soup2.find("h2", {"data-dtype": "d3ifr"}).text
+                            except:
+                                name = ""
+                            try:
+                                type = soup2.find("span", class_="YhemCb").text
+                            except:
+                                type = ""
+                            try:
+                                horaire = soup2.find("table", class_="WgFkxc").text
+                            except:
+                                horaire = ""
+                            try:
+                                jours_semaine = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']
+                            except:
+                                jours_semaine = ""
+
+                            try:
+                                pattern = rf'({"|".join(jours_semaine)})((?:\d{{2}}:\d{{2}}–\d{{2}}:\d{{2}}|Fermé))+'
+                                matches = re.findall(pattern, horaire)
+                                horaires = {jour: heures if "Fermé" not in heures else "Fermé" for jour, heures in matches}
+                                horaires_json = json.dumps(horaires, ensure_ascii=False)
+                            except:
+                                horaires_json = ""
+                            try:
+                                zip_code = adr_complete.split(",")[1].split(" ")[1]
+                            except:
+                                zip_code = ""
+                            try:
+                                city = adr_complete.split(",")[1].split(" ")[2]
+                            except:
+                                city = ""
+                            image_url = ""
+                            try:
+                                style = soup2.find("button", {"data-clid": "local-photo-browser"}).find("div").get("style")
+                                parts = style.split("url(")
+                                image_url = parts[1].strip(")\"'")
+                            except:
+                                img = "no"
+                            try:
+                                phone = soup2.find("span", class_="LrzXr zdqRlf kno-fv").text
+                            except:
+                                phone = ""
+                            try:
+                                web = soup2.find("a", class_="xFAlBc").text
+                            except:
+                                web = ""
+                            print(f"{name};{zip_code};{city};{adr_complete};{phone};{web};{horaires_json};{type};{image_url} ")
+                            MAG.append(name)
+                            ZIP.append(zip_code)
+                            CITY.append(city)
+                            ADR.append(adr_complete)
+                            PHONE.append(phone)
+                            WEB.append(web)
+                            HORAIRE.append(horaires_json)
+                            TYPE.append(type)
+                            IMAGE.append(image_url)
+                        except:
+                            print("erreur mag")
+                            continue
             except Exception as e:
                 print(f"Erreur WebDriver : {e}")
-    #fermer la page chrome
-    response = HttpResponse()
-    response['Content-Disposition'] = 'attachment; filename='+enseigne+'.csv'
-    # Create the CSV writer using the HttpResponse as the "file"
-    writer = csv.writer(response)
-    writer.writerow(['Nom Magasin', 'Type','Adresse','Numero Tel'])
-    for (name,type,zip_code,city,adr_complete,phone,horaires_json,web,image_url) in zip(MAG,TYPE,ZIP,CITY,ADR,PHONE,HORAIRE,WEB,IMAGE):
-        writer.writerow([name,type,zip_code,city,adr_complete,phone,horaires_json,web,image_url])
 
-    # return response,{'message': 'Scraping successful', 'tickets': user.profile.tickets}
+    response = HttpResponse()
+    response['Content-Disposition'] = 'attachment; filename=' + enseigne + '.csv'
+    writer = csv.writer(response)
+    writer.writerow(['Nom Magasin', 'Type', 'Adresse', 'Numero Tel'])
+    for (name, type, zip_code, city, adr_complete, phone, horaires_json, web, image_url) in zip(MAG, TYPE, ZIP, CITY, ADR, PHONE, HORAIRE, WEB, IMAGE):
+        writer.writerow([name, type, zip_code, city, adr_complete, phone, horaires_json, web, image_url])
+
     return response
 
 
@@ -255,19 +263,23 @@ def submit_form_prenium(request):
         print("prenium")
         enseigne = request.data.get('brand')
         ville = request.data.get('city')
-        url2="https://www.google.com/search?q="+enseigne+"+"+ville+"&rlz=1C5GCEM_en&biw=1848&bih=968&tbm=lcl&ei=apkhZLSKGsbVkdUP1oabuAY&ved=0ahUKEwi058D5mvz9AhXGaqQEHVbDBmcQ4dUDCAg&uact=5&oq="+enseigne+"+"+ville+"&gs_lcp=Cg1nd3Mtd2l6LWxvY2FsEAMyCAgAEIAEELEDMgUIABCABDIFCAAQgAQyBQgAEIAEMgUIABCABDIFCAAQgAQyBQgAEIAEMgUIABCABDIFCAAQgAQyBQgAEIAEOgcIABCKBRBDOgYIABAWEB46CwgAEIAEELEDEIMBOgoIABCKBRCxAxBDUP8KWOjchgFgjN6GAWgHcAB4AIABfIgB-AySAQQxOC4ymAEAoAEBsAEAwAEB&sclient=gws-wiz-local#rlfi=hd:;si:;mv:[[72.59981891874918,78.7458826694124],[24.315754054065685,-46.76192983058759]];start:{page}"
-        pages = range(0,40,20)
-        MAG=[]
-        PHONE=[]
-        TYPE=[]
-        ADR=[]
-        ZIP=[]
-        CITY=[]
-        WEB=[]
-        HORAIRE=[]
-        IMAGE=[]
+
+        # Enregistrer l'historique
+        History.objects.create(user=user, ville=ville, magasin=enseigne, nb_ticket_en_cours=user.profile.tickets, type_scrap='premium')
+
+        url2 = "https://www.google.com/search?q=" + enseigne + "+" + ville + "&rlz=1C5GCEM_en&biw=1848&bih=968&tbm=lcl&ei=apkhZLSKGsbVkdUP1oabuAY&ved=0ahUKEwi058D5mvz9AhXGaqQEHVbDBmcQ4dUDCAg&uact=5&oq=" + enseigne + "+" + ville + "&gs_lcp=Cg1nd3Mtd2l6LWxvY2FsEAMyCAgAEIAEELEDMgUIABCABDIFCAAQgAQyBQgAEIAEMgUIABCABDIFCAAQgAQyBQgAEIAEMgUIABCABDIFCAAQgAQyBQgAEIAEOgcIABCKBRBDOgYIABAWEB46CwgAEIAEELEDEIMBOgoIABCKBRCxAxBDUP8KWOjchgFgjN6GAWgHcAB4AIABfIgB-AySAQQxOC4ymAEAoAEBsAEAwAEB&sclient=gws-wiz-local#rlfi=hd:;si:;mv:[[72.59981891874918,78.7458826694124],[24.315754054065685,-46.76192983058759]];start:{page}"
+        pages = range(0, 40, 20)
+        MAG = []
+        PHONE = []
+        TYPE = []
+        ADR = []
+        ZIP = []
+        CITY = []
+        WEB = []
+        HORAIRE = []
+        IMAGE = []
         EMAILS = []
-        # Setup WebDriver options
+
         options = FirefoxOptions()
         options.add_argument("--headless")
         service = FirefoxService()
@@ -276,153 +288,128 @@ def submit_form_prenium(request):
             try:
                 driver.get(url2)
                 time.sleep(1)
-                #driver.save_screenshot("screenshot1.png")
                 back = driver.find_elements(By.CSS_SELECTOR, "div[class='lssxud']")[1]
                 back.click()
 
                 for page in pages:
-                        print("page")
-                        print(page)
-                        driver.get(url2.format(page=page,ville=ville))
-                        time.sleep(2)
-                        soup = BeautifulSoup(driver.page_source, 'html.parser')
-                        time.sleep(1)    
+                    print("page")
+                    print(page)
+                    driver.get(url2.format(page=page, ville=ville))
+                    time.sleep(2)
+                    soup = BeautifulSoup(driver.page_source, 'html.parser')
+                    time.sleep(1)
 
-                        stores_verif= soup.find_all("div", class_="rllt__details")
-                        stores= driver.find_elements(By.CSS_SELECTOR, "div[class='rllt__details']")
-                        if stores_verif ==[]:
-                            break
-                        print("------")
+                    stores_verif = soup.find_all("div", class_="rllt__details")
+                    stores = driver.find_elements(By.CSS_SELECTOR, "div[class='rllt__details']")
+                    if stores_verif == []:
+                        break
+                    print("------")
 
-                        for x in range(23):
-                            stores2= driver.find_elements(By.CSS_SELECTOR, "div[class='rllt__details']")
+                    for x in range(23):
+                        stores2 = driver.find_elements(By.CSS_SELECTOR, "div[class='rllt__details']")
+                        time.sleep(0.5)
+                        try:
+                            stores2[x].click()
+                            soup2 = BeautifulSoup(driver.page_source, 'html.parser')
                             time.sleep(0.5)
                             try:
-                                stores2[x].click()
-                                soup2 = BeautifulSoup(driver.page_source, 'html.parser')
-                                time.sleep(0.5)
-                                try:
-                                    adr_complete=soup2.find("div", {"data-attrid": "kc:/location/location:address"}).text
-                                except:
-                                    adr_complete=""
-                                try:
-                                    name=soup2.find("h2", {"data-dtype": "d3ifr"}).text
-                                except:
-                                    name=""
-                                try:
-                                    type=soup2.find("span", class_="YhemCb").text
-                                except:
-                                    type=""
-                                try:
-                                    horaire=soup2.find("table", class_="WgFkxc").text
-                                except:
-                                    horaire=""
-                                try:
-                                    jours_semaine = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']
-                                except:
-                                    jours_semaine=""
-                                
-                                # Utilisez des expressions régulières pour extraire les jours et les heures
-                                try:
-                                    pattern = rf'({"|".join(jours_semaine)})((?:\d{{2}}:\d{{2}}–\d{{2}}:\d{{2}}|Fermé))+'
-                                    matches = re.findall(pattern, horaire)
-                                    horaires = {jour: heures if "Fermé" not in heures else "Fermé" for jour, heures in matches}
-                                    horaires_json = json.dumps(horaires, ensure_ascii=False)
-                                except:
-                                    horaires_json=""
-                                try:
-                                    zip_code=adr_complete.split(",")[1].split(" ")[1]
-                                except:
-                                    zip_code=""
-                                try:
-                                    city=adr_complete.split(",")[1].split(" ")[2]
-                                except:
-                                    city=""
-                                image_url=""
-                                try:
-                                    style=soup2.find("button", {"data-clid": "local-photo-browser"}).find("div").get("style")
-                                    parts = style.split("url(")
-                                    image_url = parts[1].strip(")\"'")
-                                except:
-                                    img="no"
-                                try:
-                                    #phone=soup2.find("a", {"data-dtype": "d3ph"}).text
-                                    phone=soup2.find("span", class_="LrzXr zdqRlf kno-fv").text
-                                except:
-                                    phone=""
-                                try:
-                                    web=soup2.find("a", class_="xFAlBc").text
-                                except:
-                                    web=""
-                                print(f"{name};{zip_code};{city};{adr_complete};{phone};{web};{horaires_json};{type};{image_url} ")
-                                MAG.append(name)
-                                ZIP.append(zip_code)
-                                CITY.append(city)
-                                ADR.append(adr_complete)
-                                PHONE.append(phone)
-                                WEB.append(web)
-                                HORAIRE.append(horaires_json)
-                                TYPE.append(type)
-                                IMAGE.append(image_url)
+                                adr_complete = soup2.find("div", {"data-attrid": "kc:/location/location:address"}).text
                             except:
-                                    print("erreur mag")
-                                    continue
-                print(MAG)
-                # Recherche des emails pour chaque magasin
-                for name in MAG:
-                    try:
-                        email_url = "https://www.google.com/search?q={nomM}%2Bemail%2Bcontact&client=firefox-b-d&sca_esv=1114ab6409594670&sxsrf=ACQVn092M4Iq4F0e47WjMlAG9Op8OQGXJQ%3A1710249643869&ei=q1bwZZnQNJ-lkdUP48mFkAg&ved=0ahUKEwjZ0f-z6O6EAxWfUqQEHeNkAYIQ4dUDCBA&uact=5&oq=Electrician+Service+Pros%2Bemail%2Bcontact&gs_lp=Egxnd3Mtd2l6LXNlcnAiJkVsZWN0cmljaWFuIFNlcnZpY2UgUHJvcytlbWFpbCtjb250YWN0MgUQIRigATIFECEYoAEyBRAhGKABSNMaUOQKWPkXcAJ4AZABAJgBPKABjQOqAQE4uAEDyAEA-AEBmAIKoAKxA8ICBxAjGLADGCfCAgoQABhHGNYEGLADwgIHECMYsAIYJ8ICBxAhGAoYoAGYAwCIBgGQBgSSBwIxMKAHyxY&sclient=gws-wiz-serp"
-                        driver.get(email_url.format(nomM=name.replace("&", "")))
-                        print(email_url.format(nomM=name.replace("&", "")))
-                        print(name.replace("&", ""))
-                        time.sleep(3)
-                        soup_email = BeautifulSoup(driver.page_source, 'html.parser')
-                        time.sleep(1.5)
-                        msg_lien = soup_email.find_all("div", class_="MjjYud")
-                        liste_emails = []
-                        for msg in msg_lien[:4]:
-                            if "@" in msg.text:
-                                emails = re.findall(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+", msg.text)
-                                if emails:
-                                    email = emails[0]
-                                    clean_email = re.sub(r"\.[A-Z][^@]*$", "", email)
-                                    clean_email = re.sub(r"(?<!\.)[A-Z].*", "", clean_email)
-                                    liste_emails.append(clean_email)
-                        EMAILS.append(liste_emails)
-                    except:
-                        EMAILS.append([])
+                                adr_complete = ""
+                            try:
+                                name = soup2.find("h2", {"data-dtype": "d3ifr"}).text
+                            except:
+                                name = ""
+                            try:
+                                type = soup2.find("span", class_="YhemCb").text
+                            except:
+                                type = ""
+                            try:
+                                horaire = soup2.find("table", class_="WgFkxc").text
+                            except:
+                                horaire = ""
+                            try:
+                                jours_semaine = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']
+                            except:
+                                jours_semaine = ""
+
+                            try:
+                                pattern = rf'({"|".join(jours_semaine)})((?:\d{{2}}:\d{{2}}–\d{{2}}:\d{{2}}|Fermé))+'
+                                matches = re.findall(pattern, horaire)
+                                horaires = {jour: heures if "Fermé" not in heures else "Fermé" for jour, heures in matches}
+                                horaires_json = json.dumps(horaires, ensure_ascii=False)
+                            except:
+                                horaires_json = ""
+                            try:
+                                zip_code = adr_complete.split(",")[1].split(" ")[1]
+                            except:
+                                zip_code = ""
+                            try:
+                                city = adr_complete.split(",")[1].split(" ")[2]
+                            except:
+                                city = ""
+                            image_url = ""
+                            try:
+                                style = soup2.find("button", {"data-clid": "local-photo-browser"}).find("div").get("style")
+                                parts = style.split("url(")
+                                image_url = parts[1].strip(")\"'")
+                            except:
+                                img = "no"
+                            try:
+                                phone = soup2.find("span", class_="LrzXr zdqRlf kno-fv").text
+                            except:
+                                phone = ""
+                            try:
+                                web = soup2.find("a", class_="xFAlBc").text
+                            except:
+                                web = ""
+                            print(f"{name};{zip_code};{city};{adr_complete};{phone};{web};{horaires_json};{type};{image_url} ")
+                            MAG.append(name)
+                            ZIP.append(zip_code)
+                            CITY.append(city)
+                            ADR.append(adr_complete)
+                            PHONE.append(phone)
+                            WEB.append(web)
+                            HORAIRE.append(horaires_json)
+                            TYPE.append(type)
+                            IMAGE.append(image_url)
+                        except:
+                            print("erreur mag")
+                            continue
             except Exception as e:
                 print(f"Erreur WebDriver : {e}")
 
     print(EMAILS)
     response = HttpResponse()
-    response['Content-Disposition'] = 'attachment; filename='+enseigne+'.csv'
-    # Create the CSV writer using the HttpResponse as the "file"
+    response['Content-Disposition'] = 'attachment; filename=' + enseigne + '.csv'
     writer = csv.writer(response)
     writer.writerow(['Nom Magasin', 'Type', 'Adresse', 'Numero Tel', 'Horaires', 'Web', 'Image', 'Emails'])
-    for (name,type,zip_code,city,adr_complete,phone,horaires_json,web,image_url,emails) in zip(MAG,TYPE,ZIP,CITY,ADR,PHONE,HORAIRE,WEB,IMAGE,EMAILS):
-        writer.writerow([name,type,zip_code,city,adr_complete,phone,horaires_json,web,image_url,emails])
+    for (name, type, zip_code, city, adr_complete, phone, horaires_json, web, image_url, emails) in zip(MAG, TYPE, ZIP, CITY, ADR, PHONE, HORAIRE, WEB, IMAGE, EMAILS):
+        writer.writerow([name, type, zip_code, city, adr_complete, phone, horaires_json, web, image_url, emails])
 
     return response
 
 
-@api_view(['POST'])
-def submit_form_basique(request):
-    # Assumer que l'utilisateur est déjà authentifié
-    # Logique pour exécuter le code backend
 
+@api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+def submit_form_basique(request):
+    user = request.user
+    logging.info(f"User {user.username} started a basic scrape.")
     print("basique")
 
-    #recup données
     enseigne = request.data.get('brand')
     ville = request.data.get('city')
-    url2="https://www.google.com/search?q="+enseigne+"+"+ville+"&rlz=1C5GCEM_en&biw=1848&bih=968&tbm=lcl&ei=apkhZLSKGsbVkdUP1oabuAY&ved=0ahUKEwi058D5mvz9AhXGaqQEHVbDBmcQ4dUDCAg&uact=5&oq="+enseigne+"+"+ville+"&gs_lcp=Cg1nd3Mtd2l6LWxvY2FsEAMyCAgAEIAEELEDMgUIABCABDIFCAAQgAQyBQgAEIAEMgUIABCABDIFCAAQgAQyBQgAEIAEMgUIABCABDIFCAAQgAQyBQgAEIAEOgcIABCKBRBDOgYIABAWEB46CwgAEIAEELEDEIMBOgoIABCKBRCxAxBDUP8KWOjchgFgjN6GAWgHcAB4AIABfIgB-AySAQQxOC4ymAEAoAEBsAEAwAEB&sclient=gws-wiz-local#rlfi=hd:;si:;mv:[[72.59981891874918,78.7458826694124],[24.315754054065685,-46.76192983058759]];start:{page}"
-    pages = range(0,40,20)
-    MAG=[]
-    PHONE=[]
-    TYPE=[]
-    ADR=[]
-    # Setup WebDriver options
+
+    History.objects.create(user=user, ville=ville, magasin=enseigne, nb_ticket_en_cours=user.profile.tickets, type_scrap='basique')
+
+    url2 = "https://www.google.com/search?q=" + enseigne + "+" + ville + "&rlz=1C5GCEM_en&biw=1848&bih=968&tbm=lcl&ei=apkhZLSKGsbVkdUP1oabuAY&ved=0ahUKEwi058D5mvz9AhXGaqQEHVbDBmcQ4dUDCAg&uact=5&oq=" + enseigne + "+" + ville + "&gs_lcp=Cg1nd3Mtd2l6LWxvY2FsEAMyCAgAEIAEELEDMgUIABCABDIFCAAQgAQyBQgAEIAEMgUIABCABDIFCAAQgAQyBQgAEIAEMgUIABCABDIFCAAQgAQyBQgAEIAEOgcIABCKBRBDOgYIABAWEB46CwgAEIAEELEDEIMBOgoIABCKBRCxAxBDUP8KWOjchgFgjN6GAWgHcAB4AIABfIgB-AySAQQxOC4ymAEAoAEBsAEAwAEB&sclient=gws-wiz-local#rlfi=hd:;si:;mv:[[72.59981891874918,78.7458826694124],[24.315754054065685,-46.76192983058759]];start:{page}"
+    pages = range(0, 40, 20)
+    MAG = []
+    PHONE = []
+    TYPE = []
+    ADR = []
+
     options = FirefoxOptions()
     options.add_argument("--headless")
     service = FirefoxService()
@@ -433,64 +420,51 @@ def submit_form_basique(request):
             time.sleep(1)
             back = driver.find_elements(By.CSS_SELECTOR, "div[class='lssxud']")[1]
             back.click()
-            #with open("/home/samihella/Downloads/Downloads/scrapp_gm.csv", "w") as f:
-            try:
-                        #1 ER ETAPE RECUPERER Nom Magasin,Type,Adresse,Numero Tel -> GOOD
-                        # 2 EME ETAPE RECUPERER MAIL RECHERCHE CROISEE GOOGLE -> CODE A AJOUTER LUNDI
-                        # 3 EME ETAPE RECUPERER NOM PATRON -> CODE A AJOUTER MERCREDI FERIE
-                        # 4 EME ETAPE RAJOUTER ACTION EN ARRIERE PLAN POUR QUE CVS S ENVOI PAR MAIL
-                        #......
-                        for page in pages:
-                            print("lets go")
-                            driver.get(url2.format(page=page))
-                            time.sleep(3)
-                            soup = BeautifulSoup(driver.page_source, 'html.parser')
-                            time.sleep(2)    
-                            stores= soup.find_all("div", class_="rllt__details")
-                            print("----")
-                            for store in stores:
-                                print(store)
-                                try:
-                                    mag = store.find_all("div")[0].text
-                                except:
-                                    mag=""
-                                try:
-                                    type= store.find_all("div")[1].text
-                                except:
-                                    type=""
-                                try:
-                                    adr= store.find_all("div")[2].text.split(" · ")[0]
-                                except:
-                                    adr=""
-                                try:
-                                    tel= store.find_all("div")[2].text.split(" · ")[1]
-                                except:
-                                    tel=""
-                                print("-------Mag------")
-                                print(mag)
-                                print(type)
-                                print(adr)
-                                print(tel)
-                                MAG.append(mag)
-                                TYPE.append(type)
-                                ADR.append(adr)
-                                PHONE.append(tel)
-                        
-                        
-                        #fermer la page chrome
-                        response = HttpResponse()
-                        response['Content-Disposition'] = 'attachment; filename='+enseigne+'.csv'
-                        print("REPONSEEEE")
-                        print(response)
-                        # Create the CSV writer using the HttpResponse as the "file"
-                        writer = csv.writer(response)
-                        writer.writerow(['Nom Magasin', 'Type','Adresse','Numero Tel'])
-                        for (name,type,adr,phone) in zip(MAG,TYPE,ADR,PHONE):
-                            writer.writerow([name,type,adr,phone])
+            for page in pages:
+                print("lets go")
+                driver.get(url2.format(page=page))
+                time.sleep(3)
+                soup = BeautifulSoup(driver.page_source, 'html.parser')
+                time.sleep(2)
+                stores = soup.find_all("div", class_="rllt__details")
+                print("----")
+                for store in stores:
+                    print(store)
+                    try:
+                        mag = store.find_all("div")[0].text
+                    except:
+                        mag = ""
+                    try:
+                        type = store.find_all("div")[1].text
+                    except:
+                        type = ""
+                    try:
+                        adr = store.find_all("div")[2].text.split(" · ")[0]
+                    except:
+                        adr = ""
+                    try:
+                        tel = store.find_all("div")[2].text.split(" · ")[1]
+                    except:
+                        tel = ""
+                    print("-------Mag------")
+                    print(mag)
+                    print(type)
+                    print(adr)
+                    print(tel)
+                    MAG.append(mag)
+                    TYPE.append(type)
+                    ADR.append(adr)
+                    PHONE.append(tel)
 
-                        return response
-                
-            except:
-                        return JsonResponse({"message": "Code mal exécuté"})
+            response = HttpResponse()
+            response['Content-Disposition'] = 'attachment; filename=' + enseigne + '.csv'
+            writer = csv.writer(response)
+            writer.writerow(['Nom Magasin', 'Type', 'Adresse', 'Numero Tel'])
+            for (name, type, adr, phone) in zip(MAG, TYPE, ADR, PHONE):
+                writer.writerow([name, type, adr, phone])
+
+            return response
+
         except Exception as e:
             print(f"Erreur WebDriver : {e}")
+            return JsonResponse({"message": "Code mal exécuté"})
