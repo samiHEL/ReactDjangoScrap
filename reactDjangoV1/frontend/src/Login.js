@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import axiosInstance from './axiosConfig';
+import { useNavigate } from 'react-router-dom';
+import './Login.css';  // Ensure this file is present
 
 const Login = ({ onLogin }) => {
   const [username, setUsername] = useState('');
@@ -8,38 +8,35 @@ const Login = ({ onLogin }) => {
   const navigate = useNavigate();
 
   const handleLogin = () => {
-    axiosInstance.post('/api/login', { username, password })
-      .then(response => {
-        alert('Login successful');
-        const { token } = response.data;
-        localStorage.setItem('token', token);
-        onLogin(username);
-        navigate('/scrap'); // Redirect to scrapping page after login
-      })
-      .catch(error => {
-        alert('Login failed: ' + error.response.data);
-      });
+    // Simulating login success
+    onLogin(username);
+    navigate('/scrap'); // Redirect to scrapping page after login
   };
 
   return (
-    <div className="form-container">
-      <div className="form-box">
-        <input
-          type="text"
-          value={username}
-          onChange={e => setUsername(e.target.value)}
-          placeholder="Username"
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          placeholder="Password"
-        />
-        <button onClick={handleLogin}>Login</button>
-        <p className="signup-message">
-          New to our platform? <Link to="/signup">Sign Up here</Link>
-        </p>
+    <div className="login-page">
+      <div className="login-left">
+        <h1>SCRAP MY DATA</h1>
+        <p>We do bla bla bla bla ...</p>
+        <button className="learn-more-button">LEARN ABOUT US</button>
+      </div>
+      <div className="login-right">
+        <h2>GET YOUR DATA INSTANT ONLINE</h2>
+        <div className="login-form">
+          <input
+            type="text"
+            value={username}
+            onChange={e => setUsername(e.target.value)}
+            placeholder="Registration Number"
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            placeholder="Password"
+          />
+          <button onClick={handleLogin} className="login-button">Login</button>
+        </div>
       </div>
     </div>
   );

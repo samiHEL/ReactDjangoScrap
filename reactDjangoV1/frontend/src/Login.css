@@ -1,0 +1,92 @@
+.login-page {
+    display: flex;
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+  }
+  
+  .login-left {
+    flex: 1;
+    background-image: url('https://www.google.com/url?sa=i&url=https%3A%2F%2Fstock.adobe.com%2Fsearch%3Fk%3Dcomputer%2Borange&psig=AOvVaw2xpwB4_aY-Kpg2fzdOOfAz&ust=1718718825138000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCLDcutrk4oYDFQAAAAAdAAAAABAE'); /* Add your background image here */
+    background-size: cover;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 50px;
+  }
+  
+  .login-left h1 {
+    font-size: 2.5rem; /* Adjusted font size */
+    margin-bottom: 20px;
+  }
+  
+  .login-left p {
+    font-size: 1rem; /* Adjusted font size */
+    margin-bottom: 40px;
+  }
+  
+  .learn-more-button {
+    background-color: #ffa500;
+    color: #1c1c1e;
+    border: none;
+    padding: 10px 20px; /* Adjusted padding */
+    font-size: 1rem; /* Adjusted font size */
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .learn-more-button:hover {
+    background-color: #ff8c00;
+  }
+  
+  .login-right {
+    flex: 1;
+    background-color: #1c1c1e;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 50px;
+  }
+  
+  .login-right h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+  
+  .login-form {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .login-form input {
+    background-color: #2c2c2e;
+    color: white;
+    border: none;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    font-size: 1rem;
+  }
+  
+  .login-form input::placeholder {
+    color: #ccc; /* Light placeholder color */
+  }
+  
+  .login-button {
+    background-color: #ffa500;
+    color: #1c1c1e;
+    border: none;
+    padding: 15px 30px;
+    font-size: 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .login-button:hover {
+    background-color: #ff8c00;
+  }
+  

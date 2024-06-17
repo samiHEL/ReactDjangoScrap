@@ -14,7 +14,7 @@ body, html {
   height: 100%;
   top: 0;
   left: 0;
-  z-index: 0;  
+  z-index: 0;
 }
 
 @keyframes gradientBG {
@@ -34,8 +34,8 @@ body, html {
   align-items: center;
   justify-content: center;
   height: 100%;
-  position: relative;  
-  z-index: 1;  
+  position: relative;
+  z-index: 1;
 }
 
 .form-box {
@@ -43,7 +43,7 @@ body, html {
   padding: 40px;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  width: 300px; 
+  width: 300px;
   z-index: 1;
 }
 
@@ -70,24 +70,24 @@ button:focus {
   display: flex;
   justify-content: space-between;
   padding: 10px 20px;
-  z-index: 2; 
+  z-index: 2;
 }
 
 .app-name {
-  font-size: 24px; /* Taille du texte */
-  font-weight: bold; /* Rend le texte en gras */
-  color: #553125; /* Couleur du texte, choisissez ce qui convient à votre palette */
+  font-size: 24px;
+  font-weight: bold;
+  color: #553125;
   padding: 10px 20px;
-  border: 3px solid #23a6d5; /* Bordure solide avec une couleur contrastée */
-  border-radius: 10px; /* Bordures arrondies */
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Ombre subtile pour un effet 3D */
+  border: 3px solid #23a6d5;
+  border-radius: 10px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
   justify-content: space-between;
-  transition: transform 0.3s, box-shadow 0.3s; /* Animation pour transform et ombre */
+  transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .app-name:hover {
-  transform: scale(1.05); /* Grossit légèrement au survol */
-  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15); /* Ombre plus prononcée au survol */
+  transform: scale(1.05);
+  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15);
 }
 
 .menu {
@@ -135,21 +135,20 @@ button:focus {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh; /* Use full height to center vertically */
+  height: 100vh;
   text-align: center;
-  color: #fff; /* Adjust the color to fit your design */
+  color: #fff;
 }
 
 .landing-page h1 {
-  font-size: 4rem; /* Large font size for the main title */
+  font-size: 4rem;
   margin-bottom: 0.5em;
 }
 
 .landing-page p {
-  font-size: 1.5rem; /* Larger font size for the subtitle */
+  font-size: 1.5rem;
   margin-bottom: 2em;
 }
-
 
 #company-name {
   transition: transform 0.3s ease, color 0.3s ease;
@@ -157,8 +156,8 @@ button:focus {
 }
 
 #company-name:hover {
-  transform: scale(1.1); /* Makes the text slightly larger */
-  color: #36D7B7; /* Change color on hover, use your theme color */
+  transform: scale(1.1);
+  color: #36D7B7;
 }
 
 .landing-page button {
@@ -179,16 +178,16 @@ button:focus {
 }
 
 .landing-page button:hover {
-  background-color: #ff8c00; /* Darker shade on hover */
+  background-color: #ff8c00;
 }
 
 .signup-message {
-  margin-top: 20px; /* Adjust the margin as needed */
+  margin-top: 20px;
   text-align: center;
 }
 
 .signup-message a {
-  color: #007bff; /* Use your theme color */
+  color: #007bff;
   text-decoration: none;
 }
 
@@ -196,10 +195,9 @@ button:focus {
   text-decoration: underline;
 }
 
-/* Styles ajoutés pour les boutons lumineux */
 .button-container {
   display: flex;
-  flex-direction: row; /* Change to row for horizontal layout */
+  flex-direction: row;
   align-items: center;
   justify-content: center;
 }
