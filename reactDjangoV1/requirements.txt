@@ -4,3 +4,4 @@ requests
 undetected-chromedriver==2.0.0
 django-cors-headers
 djangorestframework
+stripe

@@ -31,6 +31,14 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+    ]
+}
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -175,3 +183,7 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_NAME = 'sessionid'
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = False  # Changez à True en production si vous utilisez HTTPS
+
+# STRIPE
+STRIPE_SECRET_KEY = 'sk_test_51LPtT9LIqjQ7Sl29Ie8Dv20bZFve23yyYN3u40CQsTFxZTCpPjN1ofsq05DB5ylKxv31nBx7UVlGZpG5YBfe1EZF00TWZvdSrW'
+STRIPE_PUBLIC_KEY = 'pk_test_51LPtT9LIqjQ7Sl29dC93bDHkuaBVwN73rmQNeJPyQL2vnRAZ1TjYk9y4L8w9RmEV50mYKDUbDx0KLXWZRODi2XMg00Kg8uq8on'

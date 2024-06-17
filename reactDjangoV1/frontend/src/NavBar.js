@@ -1,13 +1,13 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import './App.css';
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import "./App.css";
 
-const NavBar = ({ username, isLoggedIn, onLogout }) => {
+const NavBar = ({ username, isLoggedIn, tickets, onLogout }) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
     onLogout();
-    navigate('/login');
+    navigate("/login");
   };
 
   return (
@@ -15,7 +15,9 @@ const NavBar = ({ username, isLoggedIn, onLogout }) => {
       <div className="menu">
         {isLoggedIn ? (
           <>
-            <span>Bienvenue, {username}!</span>
+            <span>
+              Bienvenue, {username}! Vous avez {tickets} tickets.
+            </span>
             <Link to="/scrap">Scrap</Link>
             <Link to="/contact">Contact</Link>
             <Link to="/shop">Shop</Link>
