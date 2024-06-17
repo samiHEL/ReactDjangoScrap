@@ -31,21 +31,28 @@ const Scrap = () => {
       headers: {
         'Authorization': `Token ${localStorage.getItem('token')}`,
         'Content-Type': 'application/json'
-      }
+      },
+      responseType: 'blob' // Important: indiquez à axios de traiter la réponse comme un blob
     })
       .then(response => {
-        alert(response.data.message);
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', 'file.csv');
-        document.body.appendChild(link);
-        link.click();
-        link.parentNode.removeChild(link);
+        if (response.status === 200) {
+          const url = window.URL.createObjectURL(new Blob([response.data]));
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute('download', 'result.csv'); // Nom du fichier téléchargé
+          document.body.appendChild(link);
+          link.click();
+          link.parentNode.removeChild(link);
+        } else {
+          alert('Erreur: la réponse du serveur n\'est pas conforme aux attentes.');
+        }
         setLoading(false);
       })
       .catch(error => {
-        alert('Submission failed: ' + error.response.data.message);
+        const errorMessage = error.response && error.response.data && error.response.data.message
+          ? error.response.data.message
+          : 'Une erreur est survenue lors de la soumission.';
+        alert(`Submission failed: ${errorMessage}`);
         setLoading(false);
       });
   };
