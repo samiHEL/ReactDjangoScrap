@@ -13,15 +13,15 @@ POST http://127.0.0.1:8000/api/login
 Content-Type: application/json
 
 {
-  "username": "yanis2",
-  "password": "Pass1234!"
+  "username": "nat997",
+  "password": "1234560aA"
 }
 
 ###
 ### Buy tickets
 POST http://localhost:8000/api/buy_tickets
 Content-Type: application/json
-Authorization: Token c217c667d1c686d3d8d503bdc93d7c6fa24b60ec
+Authorization: Token d1a1440921dc18a360bea1ebefeeafb1f6cbae91
 
 {
   "tickets": 5
@@ -32,4 +32,4 @@ Authorization: Token c217c667d1c686d3d8d503bdc93d7c6fa24b60ec
 
 GET http://127.0.0.1:8000/api/test_token
 Content-Type: application/json
-Authorization: token xxx
+Authorization: token d1a1440921dc18a360bea1ebefeeafb1f6cbae91

@@ -150,20 +150,6 @@ button:focus {
   margin-bottom: 2em;
 }
 
-.landing-page button {
-  padding: 1em 2em; /* Add some padding */
-  font-size: 1rem; /* Button font size */
-  color: #fff; /* Button text color */
-  background-color: #007bff; /* Adjust the background color as needed */
-  border: none;
-  border-radius: 5px; /* Rounded corners */
-  cursor: pointer;
-  transition: background-color 0.3s ease; /* Smooth background color transition on hover */
-}
-
-.landing-page button:hover {
-  background-color: #0056b3; /* Darker shade on hover */
-}
 
 #company-name {
   transition: transform 0.3s ease, color 0.3s ease;
@@ -176,24 +162,24 @@ button:focus {
 }
 
 .landing-page button {
-  padding: 10px 20px; /* Adjust padding as needed */
-  font-size: 1.2rem; /* Set the font size */
-  color: #fff; /* Set text color */
-  background-color: #007bff; /* Adjust background color as needed */
+  padding: 10px 20px;
+  font-size: 1.2rem;
+  color: #1c1c1e;
+  background-color: #ffa500;
   border: none;
-  border-radius: 5px; /* Rounded corners for aesthetics */
+  border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.3s ease; /* Transition for hover effect */
-  width: 200px; /* Width of the button */
-  height: 50px; /* Height of the button */
-  display: inline-block; /* Allows setting a width and height */
-  text-align: center; /* Ensures text is centered */
-  line-height: 50px; /* Centers the text vertically */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: Adds a subtle shadow for depth */
+  transition: background-color 0.3s ease;
+  width: 200px;
+  height: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .landing-page button:hover {
-  background-color: #0056b3; /* Darker shade on hover */
+  background-color: #ff8c00; /* Darker shade on hover */
 }
 
 .signup-message {
