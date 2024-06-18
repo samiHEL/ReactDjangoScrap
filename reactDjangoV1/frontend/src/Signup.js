@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axiosInstance from './axiosConfig';
+import './Signup.css'; // Ensure you have the corresponding CSS file
 
 const Signup = () => {
   const [username, setUsername] = useState('');
@@ -71,6 +72,7 @@ const Signup = () => {
   return (
     <div className="form-container">
       <div className="form-box">
+        <h1>Sign Up</h1>
         <input
           type="text"
           value={username}
@@ -83,15 +85,15 @@ const Signup = () => {
           onChange={e => setPassword(e.target.value)}
           placeholder="Password"
         />
-        {passwordLengthError && <p style={{ color: 'red' }}>{passwordLengthError}</p>}
-        {passwordFormatError && <p style={{ color: 'red' }}>{passwordFormatError}</p>}
+        {passwordLengthError && <p className="error">{passwordLengthError}</p>}
+        {passwordFormatError && <p className="error">{passwordFormatError}</p>}
         <input
           type="password"
           value={confirmPassword}
           onChange={e => setConfirmPassword(e.target.value)}
           placeholder="Confirm Password"
         />
-        {passwordError && <p style={{ color: 'red' }}>{passwordError}</p>}
+        {passwordError && <p className="error">{passwordError}</p>}
         <input
           type="email"
           value={email}
@@ -105,8 +107,11 @@ const Signup = () => {
           }}
           placeholder="Email"
         />
-        {emailError && <p style={{ color: 'red' }}>{emailError}</p>}
+        {emailError && <p className="error">{emailError}</p>}
         <button onClick={handleSignup}>Sign Up</button>
+        <p className="login-message">
+          Already have an account? <Link to="/login">Log in HERE</Link>
+        </p>
       </div>
     </div>
   );
