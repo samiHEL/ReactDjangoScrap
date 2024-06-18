@@ -1,0 +1,76 @@
+.shop-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background-color: #1c1c1e;
+    color: #f5f5f7;
+    min-height: 100vh;
+  }
+  
+  .shop-title {
+    font-size: 2.5rem;
+    color: #ffa500;
+    margin-bottom: 20px;
+  }
+  
+  .ticket-info {
+    background: #2c2c2e;
+    color: #f5f5f7;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    margin-bottom: 20px;
+    width: 300px;
+  }
+  
+  .ticket-info h2 {
+    font-size: 1.5rem;
+    color: #ffa500;
+    margin-bottom: 10px;
+  }
+  
+  .ticket-info p {
+    font-size: 1.2rem;
+    color: #ff8c00;
+  }
+  
+  .ticket-purchase {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 300px;
+  }
+  
+  .ticket-purchase input {
+    background-color: #2c2c2e;
+    color: white;
+    border: none;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    font-size: 1rem;
+    width: 100%;
+  }
+  
+  .ticket-purchase input::placeholder {
+    color: #ccc;
+  }
+  
+  .ticket-purchase button {
+    background-color: #ffa500;
+    color: #1c1c1e;
+    border: none;
+    padding: 15px;
+    font-size: 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+  }
+  
+  .ticket-purchase button:hover {
+    background-color: #ff8c00;
+  }
+  

@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import axiosInstance from './axiosConfig';
+import './Shop.css';
 
 const Shop = () => {
   const [tickets, setTickets] = useState(0);
 
   const handleBuyTickets = () => {
-    const token = localStorage.getItem('token'); // Récupérer le token de localStorage
+    const token = localStorage.getItem('token');
     if (!token) {
       alert('You need to log in first');
       return;
     }
 
-    axiosInstance.post('/api/buy_tickets', { tickets: parseInt(tickets, 10) }, { // Convert to integer
+    axiosInstance.post('/api/buy_tickets', { tickets: parseInt(tickets, 10) }, {
       headers: {
         'Authorization': `Token ${token}`
       }
@@ -26,14 +27,21 @@ const Shop = () => {
 
   return (
     <div className="shop-container">
-      <h1>Buy Tickets</h1>
-      <input
-        type="number"
-        value={tickets}
-        onChange={e => setTickets(e.target.value)}
-        placeholder="Number of tickets"
-      />
-      <button onClick={handleBuyTickets}>Buy Tickets</button>
+      <h1 className="shop-title">Buy Tickets</h1>
+      <div className="ticket-info">
+        <h2>Ticket Price: $10</h2>
+        <p>Buy tickets for our events and enjoy exclusive access!</p>
+      </div>
+      <div className="ticket-purchase">
+        <input
+          type="number"
+          value={tickets}
+          onChange={e => setTickets(e.target.value)}
+          placeholder="Number of tickets"
+          min="1"
+        />
+        <button onClick={handleBuyTickets}>Buy Tickets</button>
+      </div>
     </div>
   );
 };
