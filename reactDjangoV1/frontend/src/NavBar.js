@@ -1,18 +1,26 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './NavBar.css';  // Ensure this file is present
 
-const NavBar = ({ username, onLogout }) => {
+const NavBar = ({ username, isLoggedIn,onLogout }) => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    onLogout();
+    navigate('/login');
+  };
+
   return (
     <div className="navbar">
       <div className="menu">
-        {username ? (
+        {isLoggedIn ? (
           <>
             <span className="nav-link">Bienvenue, {username}!</span>
             <Link to="/scrap" className="nav-link">Scrap</Link>
             <Link to="/contact" className="nav-link">Contact</Link>
             <Link to="/shop" className="nav-link">Shop</Link>
-            <button onClick={onLogout} className="logout-button">Logout</button>
+            <Link to="/history"className="nav-link">Historique des Scraps</Link>
+            <button onClick={handleLogout} className="logout-button">Logout</button>
           </>
         ) : (
           <>
