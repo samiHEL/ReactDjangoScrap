@@ -40,8 +40,12 @@ from .serializers import UserSerializer, HistorySerializer
 from .models import Profile, History
 from django.db import IntegrityError
 from rest_framework.permissions import AllowAny
-from django.conf import settings
 import stripe
+
+from django.conf import settings
+from django.core.mail import EmailMessage, get_connection
+import os
+
 
 options = Options()
 options.add_argument("--headless")
@@ -54,12 +58,13 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 def signup(request):
     username = request.data.get('username')
     password = request.data.get('password')
+    email = request.data.get('email')
     
-    if username is None or password is None:
-        return Response({'error': 'Please provide both username and password'}, status=400)
+    if username is None or password is None or email is None:
+        return Response({'error': 'Please provide username, password and email'}, status=400)
 
     try:
-        user = User.objects.create_user(username=username, password=password)
+        user = User.objects.create_user(username=username, password=password, email=email)
         user.save()
 
         # Vérifiez si le profil existe déjà avant de le créer
@@ -290,14 +295,51 @@ def submit_form_medium(request):
             except Exception as e:
                 print(f"Erreur WebDriver : {e}")
 
-        response = HttpResponse()
-        response['Content-Disposition'] = 'attachment; filename=' + enseigne + '.csv'
-        writer = csv.writer(response)
-        writer.writerow(['Nom Magasin', 'Type', 'Adresse', 'Numero Tel'])
-        for (name, type, zip_code, city, adr_complete, phone, horaires_json, web, image_url) in zip(MAG, TYPE, ZIP, CITY, ADR, PHONE, HORAIRE, WEB, IMAGE):
-            writer.writerow([name, type, zip_code, city, adr_complete, phone, horaires_json, web, image_url])
+        # response = HttpResponse()
+        # response['Content-Disposition'] = 'attachment; filename=' + enseigne + '.csv'
+        # writer = csv.writer(response)
+        # writer.writerow(['Nom Magasin', 'Type', 'Adresse', 'Numero Tel', 'Horaire', 'Web', 'Image'])
+        # for (name, type, zip_code, city, adr_complete, phone, horaires_json, web, image_url) in zip(MAG, TYPE, ZIP, CITY, ADR, PHONE, HORAIRE, WEB, IMAGE):
+        #     writer.writerow([name, type, zip_code, city, adr_complete, phone, horaires_json, web, image_url])
 
-        return response
+        # return response
+
+        # Générer le fichier CSV
+        file_name = f'{enseigne}_{ville}.csv'
+        file_path = os.path.join('temp', file_name)
+        if not os.path.exists('temp'):
+            os.makedirs('temp')
+        with open(file_path, 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['Nom Magasin', 'Type', 'Adresse', 'Numero Tel', 'Horaire', 'Web', 'Image'])
+            for (name, type, adr_complete, phone, horaires_json, web, image_url) in zip(MAG, TYPE, ADR, PHONE, HORAIRE, WEB, IMAGE):
+                writer.writerow([name, type, adr_complete, phone, horaires_json, web, image_url])
+
+        # Envoyer le fichier par email
+        try:
+            with get_connection(
+                host=settings.EMAIL_HOST,
+                port=settings.EMAIL_PORT,
+                username=settings.EMAIL_HOST_USER,
+                password=settings.EMAIL_HOST_PASSWORD,
+                use_tls=settings.EMAIL_USE_TLS
+            ) as connection:
+                subject = 'Résultats de votre scraping'
+                message = f'Bonjour {user.username},\n\nVoici les résultats de votre scraping pour {enseigne} à {ville}.'
+                email_from = settings.EMAIL_HOST_USER
+                recipient_list = [user.email]
+
+                email = EmailMessage(subject, message, email_from, recipient_list, connection=connection)
+                email.attach_file(file_path)
+                email.send()
+
+            # Supprimer le fichier temporaire après l'envoi de l'email
+            os.remove(file_path)
+            return Response({"message": "Scraping réussi et résultats envoyés par email!"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(f"Erreur lors de l'envoi de l'email: {e}")
+            return Response({"message": "Scraping réussi, mais l'envoi de l'email a échoué."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     return Response({"message": "Vous n'avez plus de tickets. Voulez-vous être redirigé vers la page de boutique ?"}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -433,14 +475,50 @@ def submit_form_prenium(request):
                 print(f"Erreur WebDriver : {e}")
 
         print(EMAILS)
-        response = HttpResponse()
-        response['Content-Disposition'] = 'attachment; filename=' + enseigne + '.csv'
-        writer = csv.writer(response)
-        writer.writerow(['Nom Magasin', 'Type', 'Adresse', 'Numero Tel', 'Horaires', 'Web', 'Image', 'Emails'])
-        for (name, type, zip_code, city, adr_complete, phone, horaires_json, web, image_url, emails) in zip(MAG, TYPE, ZIP, CITY, ADR, PHONE, HORAIRE, WEB, IMAGE, EMAILS):
-            writer.writerow([name, type, zip_code, city, adr_complete, phone, horaires_json, web, image_url, emails])
+        # response = HttpResponse()
+        # response['Content-Disposition'] = 'attachment; filename=' + enseigne + '.csv'
+        # writer = csv.writer(response)
+        # writer.writerow(['Nom Magasin', 'Type', 'Adresse', 'Numero Tel', 'Horaires', 'Web', 'Image', 'Emails'])
+        # for (name, type, zip_code, city, adr_complete, phone, horaires_json, web, image_url, emails) in zip(MAG, TYPE, ZIP, CITY, ADR, PHONE, HORAIRE, WEB, IMAGE, EMAILS):
+        #     writer.writerow([name, type, zip_code, city, adr_complete, phone, horaires_json, web, image_url, emails])
 
-        return response
+        # return response
+
+        # Générer le fichier CSV
+        file_name = f'{enseigne}_{ville}_premium.csv'
+        file_path = os.path.join('temp', file_name)
+        if not os.path.exists('temp'):
+            os.makedirs('temp')
+        with open(file_path, 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['Nom Magasin', 'Type', 'Adresse', 'Numero Tel', 'Horaires', 'Web', 'Image', 'Emails'])
+            for (name, type, adr_complete, phone, horaires_json, web, image_url) in zip(MAG, TYPE, ADR, PHONE, HORAIRE, WEB, IMAGE):
+                writer.writerow([name, type, adr_complete, phone, horaires_json, web, image_url])
+
+        # Envoyer le fichier par email
+        try:
+            with get_connection(
+                host=settings.EMAIL_HOST,
+                port=settings.EMAIL_PORT,
+                username=settings.EMAIL_HOST_USER,
+                password=settings.EMAIL_HOST_PASSWORD,
+                use_tls=settings.EMAIL_USE_TLS
+            ) as connection:
+                subject = 'Résultats de votre scraping premium'
+                message = f'Bonjour {user.username},\n\nVoici les résultats de votre scraping premium pour {enseigne} à {ville}.'
+                email_from = settings.EMAIL_HOST_USER
+                recipient_list = [user.email]
+
+                email = EmailMessage(subject, message, email_from, recipient_list, connection=connection)
+                email.attach_file(file_path)
+                email.send()
+
+            # Supprimer le fichier temporaire après l'envoi de l'email
+            os.remove(file_path)
+            return Response({"message": "Scraping premium réussi et résultats envoyés par email!"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(f"Erreur lors de l'envoi de l'email: {e}")
+            return Response({"message": "Scraping premium réussi, mais l'envoi de l'email a échoué."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     return Response({"message": "Vous n'avez plus de tickets. Voulez-vous être redirigé vers la page de boutique ?"}, status=status.HTTP_400_BAD_REQUEST)
 
 
