@@ -19,6 +19,7 @@ const Scrap = ({ updateTickets }) => {
     }
     setLoading(true);
     let apiRoute = "";
+    debugger;
     switch (scrapType) {
       case "medium":
         apiRoute = "/api/submit_form_medium";
@@ -43,14 +44,13 @@ const Scrap = ({ updateTickets }) => {
         }
       )
       .then((response) => {
+        debugger;
         if (response.status === 200) {
-          const url = window.URL.createObjectURL(new Blob([response.data]));
-          const link = document.createElement("a");
-          link.href = url;
-          link.setAttribute("download", "result.csv"); // Nom du fichier téléchargé
-          document.body.appendChild(link);
-          link.click();
-          link.parentNode.removeChild(link);
+          if (response.data.message === undefined) {
+            alert("Scraping réussi et résultats envoyés par email!");
+          } else {
+            alert(response.data.message);
+          }
           // Mettre à jour les tickets après le scraping
           axiosInstance
             .get("/api/user/", {
