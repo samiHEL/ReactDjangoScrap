@@ -187,3 +187,11 @@ SESSION_COOKIE_SECURE = False  # Changez à True en production si vous utilisez 
 # STRIPE
 STRIPE_SECRET_KEY = 'sk_test_51LPtT9LIqjQ7Sl29Ie8Dv20bZFve23yyYN3u40CQsTFxZTCpPjN1ofsq05DB5ylKxv31nBx7UVlGZpG5YBfe1EZF00TWZvdSrW'
 STRIPE_PUBLIC_KEY = 'pk_test_51LPtT9LIqjQ7Sl29dC93bDHkuaBVwN73rmQNeJPyQL2vnRAZ1TjYk9y4L8w9RmEV50mYKDUbDx0KLXWZRODi2XMg00Kg8uq8on'
+
+# SMTP
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'nafise.mougamadousalime@gmail.com'
+EMAIL_HOST_PASSWORD = 'tonm srqh klvb gbep'
