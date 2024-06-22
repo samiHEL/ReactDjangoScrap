@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 import axiosInstance from "./axiosConfig";
 import { loadStripe } from "@stripe/stripe-js";
-
 import './Shop.css';
 
 const stripePromise = loadStripe(
@@ -9,10 +8,8 @@ const stripePromise = loadStripe(
 );
 
 const Shop = ({ updateTickets }) => {
-  const [tickets, setTickets] = useState(0);
-
   const handleBuyTickets = async (tickets) => {
-    const token = localStorage.getItem("token"); // Récupérer le token de localStorage
+    const token = localStorage.getItem("token");
     if (!token) {
       alert("You need to log in first");
       return;
@@ -21,7 +18,7 @@ const Shop = ({ updateTickets }) => {
     try {
       const response = await axiosInstance.post(
         "/api/create_checkout_session",
-        { tickets: parseInt(tickets, 10) }, // Convertir en entier
+        { tickets: parseInt(tickets, 10) },
         {
           headers: {
             Authorization: `Token ${token}`,
@@ -42,27 +39,6 @@ const Shop = ({ updateTickets }) => {
           (error.response ? error.response.data.message : error.message)
       );
     }
-  };
-
-  const handleBuyCustomTickets = () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("You need to log in first");
-      return;
-    }
-
-    axiosInstance.post("/api/buy_tickets", { tickets: parseInt(tickets, 10) }, {
-      headers: {
-        'Authorization': `Token ${token}`
-      }
-    })
-    .then(response => {
-      alert('Tickets purchased successfully');
-      updateTickets(response.data.tickets); // Mettre à jour les tickets après l'achat
-    })
-    .catch(error => {
-      alert('Purchase failed: ' + (error.response ? error.response.data : error.message));
-    });
   };
 
   return (
