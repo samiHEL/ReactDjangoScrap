@@ -88,6 +88,17 @@ const Shop = ({ updateTickets }) => {
           <button onClick={() => handleBuyTickets(30)}>Acheter</button>
         </div>
       </div>
+      <div className="ticket-purchase">
+        <h2>Buy Custom Number of Tickets</h2>
+        <input
+          type="number"
+          value={tickets}
+          onChange={e => setTickets(e.target.value)}
+          placeholder="Number of tickets"
+          min="1"
+        />
+        <button onClick={handleBuyCustomTickets}>Buy Tickets</button>
+      </div>
     </div>
   );
 };
