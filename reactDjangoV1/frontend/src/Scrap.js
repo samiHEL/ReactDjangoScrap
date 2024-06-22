@@ -133,11 +133,11 @@ const Scrap = ({ updateTickets }) => {
           <div
             key={index}
             className={`package-card ${
-              selectedPackage === index ? "selected" : "blurred"
+              selectedPackage === index ? "selected" : selectedPackage !== null ? "blurred" : ""
             }`}
             style={{
-              transform: selectedPackage === index ? "scale(1.1)" : "scale(1)",
-              order: selectedPackage === index ? 0 : 1,
+              transform: selectedPackage === index ? "scale(1.2)" : "scale(1)",
+              order: selectedPackage === index ? 1 : 0,
             }}
             onClick={() => handleViewMore(index)}
           >
