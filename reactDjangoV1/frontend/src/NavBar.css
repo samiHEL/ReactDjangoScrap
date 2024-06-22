@@ -1,5 +1,6 @@
 .navbar {
-    background-color: #1c1c1e; /* Dark background color for the navbar */
+    /*background-image: url("background-image.jpg");  Dark background color for the navbar */
+    background-color: #1c1c1e;
     padding: 10px 20px;
     display: flex;
     justify-content: center;

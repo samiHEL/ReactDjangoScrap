@@ -9,7 +9,7 @@ const Scrap = ({ updateTickets }) => {
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
   const [scrapType, setScrapType] = useState("");
-  const [expanded, setExpanded] = useState(null);
+  const [selectedPackage, setSelectedPackage] = useState(null);
   const navigate = useNavigate();
 
   const handleSubmit = () => {
@@ -88,7 +88,8 @@ const Scrap = ({ updateTickets }) => {
   };
 
   const handleViewMore = (index) => {
-    setExpanded(expanded === index ? null : index);
+    setSelectedPackage(selectedPackage === index ? null : index);
+    setScrapType(packages[index].type);
   };
 
   const packages = [
@@ -118,20 +119,36 @@ const Scrap = ({ updateTickets }) => {
     },
   ];
 
+  const handleBackgroundClick = (e) => {
+    if (e.target.className === "scrap-page") {
+      setSelectedPackage(null);
+    }
+  };
+
   return (
-    <div className="scrap-page">
+    <div className="scrap-page" onClick={handleBackgroundClick}>
       <h1 className="scrap-title">Scrapping Packages</h1>
       <div className="packages">
         {packages.map((pkg, index) => (
-          <div key={index} className="package-card">
+          <div
+            key={index}
+            className={`package-card ${
+              selectedPackage === index ? "selected" : "blurred"
+            }`}
+            style={{
+              transform: selectedPackage === index ? "scale(1.1)" : "scale(1)",
+              order: selectedPackage === index ? 0 : 1,
+            }}
+            onClick={() => handleViewMore(index)}
+          >
             <h2>{pkg.title}</h2>
             <h3>{pkg.subtitle}</h3>
             <p className="price">{pkg.price}</p>
             <p>{pkg.description}</p>
-            {expanded === index && (
+            {selectedPackage === index && (
               <>
                 <p className="details">{pkg.details}</p>
-                <div className="form-box">
+                <div className="form-box" onClick={(e) => e.stopPropagation()}>
                   <input
                     type="text"
                     value={brand}
@@ -151,13 +168,8 @@ const Scrap = ({ updateTickets }) => {
                 </div>
               </>
             )}
-            <button
-              onClick={() => {
-                setScrapType(pkg.type);
-                handleViewMore(index);
-              }}
-            >
-              {expanded === index ? "View less" : "Start Scrapping"}
+            <button onClick={() => handleViewMore(index)}>
+              {selectedPackage === index ? "View less" : "Start Scrapping"}
             </button>
           </div>
         ))}
