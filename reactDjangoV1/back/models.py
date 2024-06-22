@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    tickets = models.IntegerField(default=0)
+    tickets = models.IntegerField(default=5)
 
     def __str__(self):
         return self.user.username

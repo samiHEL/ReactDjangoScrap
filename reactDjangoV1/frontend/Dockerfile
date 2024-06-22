@@ -9,6 +9,7 @@ COPY package.json package-lock.json ./
 
 # Étape 4: Installer les dépendances
 RUN npm install
+RUN npm install @stripe/stripe-js
 
 # Étape 5: Copier le reste des fichiers du projet dans le conteneur
 COPY . .

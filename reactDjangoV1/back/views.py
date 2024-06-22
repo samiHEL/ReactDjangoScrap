@@ -40,9 +40,18 @@ from .serializers import UserSerializer, HistorySerializer
 from .models import Profile, History
 from django.db import IntegrityError
 from rest_framework.permissions import AllowAny
+
+import stripe
+
+from django.conf import settings
+from django.core.mail import EmailMessage, get_connection
+import os
+
 options = Options()
 options.add_argument("--headless")
 driver = webdriver.Firefox(options=options)
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
 @api_view(['POST'])
@@ -50,12 +59,12 @@ driver = webdriver.Firefox(options=options)
 def signup(request):
     username = request.data.get('username')
     password = request.data.get('password')
-    
-    if username is None or password is None:
-        return Response({'error': 'Please provide both username and password'}, status=400)
+    email = request.data.get('email')
 
+    if username is None or password is None or email is None:
+        return Response({'error': 'Please provide username, password and email'}, status=400)
     try:
-        user = User.objects.create_user(username=username, password=password)
+        user = User.objects.create_user(username=username, password=password, email=email)
         user.save()
 
         # Vérifiez si le profil existe déjà avant de le créer
@@ -73,6 +82,8 @@ def login(request):
     token, created = Token.objects.get_or_create(user=user)
     serializer = UserSerializer(user)
     return Response({'token': token.key, 'user': serializer.data})
+
+
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
 def logout_view(request):
@@ -81,23 +92,73 @@ def logout_view(request):
 
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
-def buy_tickets(request):
+def create_checkout_session(request):
     user = request.user
     try:
-        tickets_to_add = int(request.data.get('tickets', 0))  # Convert to int
+        tickets_to_add = int(request.data.get('tickets', 0))
     except ValueError:
         return Response({'message': 'Invalid number of tickets'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Ensure the user has a profile
-    if not hasattr(user, 'profile'):
-        Profile.objects.create(user=user)
+    if tickets_to_add <= 0:
+        return Response({'message': 'Invalid number of tickets'}, status=status.HTTP_400_BAD_REQUEST)
 
-    if tickets_to_add > 0:
-        user.profile.tickets += tickets_to_add
-        user.profile.save()
-        return Response({'message': 'Tickets purchased successfully', 'tickets': user.profile.tickets})
-    
-    return Response({'message': 'Invalid number of tickets'}, status=status.HTTP_400_BAD_REQUEST)
+    # Définir le prix en fonction du nombre de tickets
+    if tickets_to_add == 5:
+        unit_amount = 499  # 4.99 USD EUR ticket
+    elif tickets_to_add == 15:
+        unit_amount = 1499  # 14.99 EUR par ticket
+    elif tickets_to_add == 30:
+        unit_amount = 2999  # 29.99 EUR par ticket
+    else:
+        return Response({'message': 'Invalid number of tickets'}, status=status.HTTP_400_BAD_REQUEST)
+
+    session = stripe.checkout.Session.create(
+        payment_method_types=['card'],
+        line_items=[{
+            'price_data': {
+                'currency': 'eur',
+                'product_data': {
+                    'name': f'{tickets_to_add} Tickets',
+                },
+                'unit_amount': unit_amount,
+            },
+            'quantity': 1,
+        }],
+        mode='payment',
+        success_url='http://localhost:3000/shop/success' + '?session_id={CHECKOUT_SESSION_ID}',
+        cancel_url='http://localhost:3000/shop/cancel',
+        metadata={
+            'user_id': user.id,
+            'tickets': tickets_to_add
+        }
+    )
+
+    return Response({'sessionId': session.id})
+
+
+
+@api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+def buy_tickets(request):
+    user = request.user
+    session_id = request.data.get('session_id', None)
+
+    if session_id is None:
+        return Response({'message': 'Session ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        session = stripe.checkout.Session.retrieve(session_id)
+        if session.payment_status == 'paid':
+            tickets_to_add = int(session.metadata.tickets)
+            if not hasattr(user, 'profile'):
+                Profile.objects.create(user=user)
+            user.profile.tickets += tickets_to_add
+            user.profile.save()
+            return Response({'message': 'Tickets purchased successfully', 'tickets': user.profile.tickets})
+        else:
+            return Response({'message': 'Payment not successful'}, status=status.HTTP_400_BAD_REQUEST)
+    except stripe.error.StripeError as e:
+        return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
@@ -238,14 +299,53 @@ def submit_form_medium(request):
             except Exception as e:
                 print(f"Erreur WebDriver : {e}")
 
-    response = HttpResponse()
-    response['Content-Disposition'] = 'attachment; filename=' + enseigne + '.csv'
-    writer = csv.writer(response)
-    writer.writerow(['Nom Magasin', 'Type', 'Adresse', 'Numero Tel'])
-    for (name, type, zip_code, city, adr_complete, phone, horaires_json, web, image_url) in zip(MAG, TYPE, ZIP, CITY, ADR, PHONE, HORAIRE, WEB, IMAGE):
-        writer.writerow([name, type, zip_code, city, adr_complete, phone, horaires_json, web, image_url])
+# response = HttpResponse()
+# response['Content-Disposition'] = 'attachment; filename=' + enseigne + '.csv'
+# writer = csv.writer(response)
+# writer.writerow(['Nom Magasin', 'Type', 'Adresse', 'Numero Tel'])
+# for (name, type, zip_code, city, adr_complete, phone, horaires_json, web, image_url) in zip(MAG, TYPE, ZIP, CITY, ADR, PHONE, HORAIRE, WEB, IMAGE):
+# writer.writerow([name, type, zip_code, city, adr_complete, phone, horaires_json, web, image_url])
 
-    return response
+# return response
+
+        # Générer le fichier CSV
+        file_name = f'{enseigne}_{ville}.csv'
+        file_path = os.path.join('temp', file_name)
+        if not os.path.exists('temp'):
+            os.makedirs('temp')
+        with open(file_path, 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['Nom Magasin', 'Type', 'Adresse', 'Numero Tel', 'Horaire', 'Web', 'Image'])
+            for (name, type, adr_complete, phone, horaires_json, web, image_url) in zip(MAG, TYPE, ADR, PHONE, HORAIRE, WEB, IMAGE):
+                writer.writerow([name, type, adr_complete, phone, horaires_json, web, image_url])
+
+        # Envoyer le fichier par email
+        try:
+            with get_connection(
+                host=settings.EMAIL_HOST,
+                port=settings.EMAIL_PORT,
+                username=settings.EMAIL_HOST_USER,
+                password=settings.EMAIL_HOST_PASSWORD,
+                use_tls=settings.EMAIL_USE_TLS
+            ) as connection:
+                subject = 'Résultats de votre scraping'
+                message = f'Bonjour {user.username},\n\nVoici les résultats de votre scraping pour {enseigne} à {ville}.'
+                email_from = settings.EMAIL_HOST_USER
+                recipient_list = [user.email]
+
+                email = EmailMessage(subject, message, email_from, recipient_list, connection=connection)
+                email.attach_file(file_path)
+                email.send()
+
+            # Supprimer le fichier temporaire après l'envoi de l'email
+            os.remove(file_path)
+            return Response({"message": "Scraping réussi et résultats envoyés par email!"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(f"Erreur lors de l'envoi de l'email: {e}")
+            return Response({"message": "Scraping réussi, mais l'envoi de l'email a échoué."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    return Response({"message": "Vous n'avez plus de tickets. Voulez-vous être redirigé vers la page de boutique ?"}, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 @api_view(['POST'])
@@ -379,15 +479,51 @@ def submit_form_prenium(request):
             except Exception as e:
                 print(f"Erreur WebDriver : {e}")
 
-    print(EMAILS)
-    response = HttpResponse()
-    response['Content-Disposition'] = 'attachment; filename=' + enseigne + '.csv'
-    writer = csv.writer(response)
-    writer.writerow(['Nom Magasin', 'Type', 'Adresse', 'Numero Tel', 'Horaires', 'Web', 'Image', 'Emails'])
-    for (name, type, zip_code, city, adr_complete, phone, horaires_json, web, image_url, emails) in zip(MAG, TYPE, ZIP, CITY, ADR, PHONE, HORAIRE, WEB, IMAGE, EMAILS):
-        writer.writerow([name, type, zip_code, city, adr_complete, phone, horaires_json, web, image_url, emails])
+        print(EMAILS)
+        # response = HttpResponse()
+        # response['Content-Disposition'] = 'attachment; filename=' + enseigne + '.csv'
+        # writer = csv.writer(response)
+        # writer.writerow(['Nom Magasin', 'Type', 'Adresse', 'Numero Tel', 'Horaires', 'Web', 'Image', 'Emails'])
+        # for (name, type, zip_code, city, adr_complete, phone, horaires_json, web, image_url, emails) in zip(MAG, TYPE, ZIP, CITY, ADR, PHONE, HORAIRE, WEB, IMAGE, EMAILS):
+        #     writer.writerow([name, type, zip_code, city, adr_complete, phone, horaires_json, web, image_url, emails])
 
-    return response
+        # return response
+            # Générer le fichier CSV
+        file_name = f'{enseigne}_{ville}_premium.csv'
+        file_path = os.path.join('temp', file_name)
+        if not os.path.exists('temp'):
+            os.makedirs('temp')
+        with open(file_path, 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['Nom Magasin', 'Type', 'Adresse', 'Numero Tel', 'Horaires', 'Web', 'Image', 'Emails'])
+            for (name, type, adr_complete, phone, horaires_json, web, image_url) in zip(MAG, TYPE, ADR, PHONE, HORAIRE, WEB, IMAGE):
+                writer.writerow([name, type, adr_complete, phone, horaires_json, web, image_url])
+
+        # Envoyer le fichier par email
+        try:
+            with get_connection(
+                host=settings.EMAIL_HOST,
+                port=settings.EMAIL_PORT,
+                username=settings.EMAIL_HOST_USER,
+                password=settings.EMAIL_HOST_PASSWORD,
+                use_tls=settings.EMAIL_USE_TLS
+            ) as connection:
+                subject = 'Résultats de votre scraping premium'
+                message = f'Bonjour {user.username},\n\nVoici les résultats de votre scraping premium pour {enseigne} à {ville}.'
+                email_from = settings.EMAIL_HOST_USER
+                recipient_list = [user.email]
+
+                email = EmailMessage(subject, message, email_from, recipient_list, connection=connection)
+                email.attach_file(file_path)
+                email.send()
+
+            # Supprimer le fichier temporaire après l'envoi de l'email
+            os.remove(file_path)
+            return Response({"message": "Scraping premium réussi et résultats envoyés par email!"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(f"Erreur lors de l'envoi de l'email: {e}")
+            return Response({"message": "Scraping premium réussi, mais l'envoi de l'email a échoué."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    return Response({"message": "Vous n'avez plus de tickets. Voulez-vous être redirigé vers la page de boutique ?"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -468,3 +604,12 @@ def submit_form_basique(request):
         except Exception as e:
             print(f"Erreur WebDriver : {e}")
             return JsonResponse({"message": "Code mal exécuté"})
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_info(request):
+    user = request.user
+    response_data = {
+        'username': user.username,
+        'tickets': user.profile.tickets,  # Assurez-vous que ce champ existe dans votre modèle User
+    }
+    return Response(response_data)
