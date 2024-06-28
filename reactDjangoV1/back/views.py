@@ -9,17 +9,14 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout, get_user_model
 import csv
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.common.by import By
 import requests
 from bs4 import BeautifulSoup
 import time
 import undetected_chromedriver as uc
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
 import re
 import json
-from selenium.webdriver.firefox.service import Service as FirefoxService
 import logging
 from rest_framework import status
 from rest_framework.response import Response
@@ -47,11 +44,24 @@ from django.conf import settings
 from django.core.mail import EmailMessage, get_connection
 import os
 
-options = Options()
-options.add_argument("--headless")
-driver = webdriver.Firefox(options=options)
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
+
+
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.common.by import By
+
+
+def get_chrome_driver():
+    options = ChromeOptions()
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--window-size=1920x1080")
+    service = ChromeService(executable_path='/usr/local/bin/chromedriver')
+    return webdriver.Chrome(service=service, options=options)
 
 
 @api_view(['POST'])
@@ -167,27 +177,22 @@ def get_history(request):
     history_entries = History.objects.filter(user=user).order_by('-id')
     serializer = HistorySerializer(history_entries, many=True)
     return Response(serializer.data)
-
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
 def submit_form_medium(request):
     user = request.user
 
-    # Ensure the user has a profile
     if not hasattr(user, 'profile'):
         Profile.objects.create(user=user)
 
     if user.profile.tickets >= 1:
         user.profile.tickets -= 1
         user.profile.save()
-        print("medium")
         enseigne = request.data.get('brand')
         ville = request.data.get('city')
 
-        # Enregistrer l'historique
         History.objects.create(user=user, ville=ville, magasin=enseigne, nb_ticket_en_cours=user.profile.tickets, type_scrap='medium')
 
-        # Suite du code de scraping...
         url2 = "https://www.google.com/search?q=" + enseigne + "+" + ville + "&rlz=1C5GCEM_en&biw=1848&bih=968&tbm=lcl&ei=apkhZLSKGsbVkdUP1oabuAY&ved=0ahUKEwi058D5mvz9AhXGaqQEHVbDBmcQ4dUDCAg&uact=5&oq=" + enseigne + "+" + ville + "&gs_lcp=Cg1nd3Mtd2l6LWxvY2FsEAMyCAgAEIAEELEDMgUIABCABDIFCAAQgAQyBQgAEIAEMgUIABCABDIFCAAQgAQyBQgAEIAEMgUIABCABDIFCAAQgAQyBQgAEIAEOgcIABCKBRBDOgYIABAWEB46CwgAEIAEELEDEIMBOgoIABCKBRCxAxBDUP8KWOjchgFgjN6GAWgHcAB4AIABfIgB-AySAQQxOC4ymAEAoAEBsAEAwAEB&sclient=gws-wiz-local#rlfi=hd:;si:;mv:[[72.59981891874918,78.7458826694124],[24.315754054065685,-46.76192983058759]];start:{page}"
         pages = range(0, 40, 20)
         MAG = []
@@ -200,11 +205,7 @@ def submit_form_medium(request):
         HORAIRE = []
         IMAGE = []
 
-        options = FirefoxOptions()
-        options.add_argument("--headless")
-        service = FirefoxService()
-
-        with webdriver.Firefox(service=service, options=options) as driver:
+        with get_chrome_driver() as driver:
             try:
                 driver.get(url2)
                 time.sleep(1)
@@ -212,8 +213,6 @@ def submit_form_medium(request):
                 back.click()
 
                 for page in pages:
-                    print("page")
-                    print(page)
                     driver.get(url2.format(page=page, ville=ville))
                     time.sleep(2)
                     soup = BeautifulSoup(driver.page_source, 'html.parser')
@@ -223,7 +222,6 @@ def submit_form_medium(request):
                     stores = driver.find_elements(By.CSS_SELECTOR, "div[class='rllt__details']")
                     if stores_verif == []:
                         break
-                    print("------")
 
                     for x in range(23):
                         stores2 = driver.find_elements(By.CSS_SELECTOR, "div[class='rllt__details']")
@@ -232,58 +230,29 @@ def submit_form_medium(request):
                             stores2[x].click()
                             soup2 = BeautifulSoup(driver.page_source, 'html.parser')
                             time.sleep(0.5)
-                            try:
-                                adr_complete = soup2.find("div", {"data-attrid": "kc:/location/location:address"}).text
-                            except:
-                                adr_complete = ""
-                            try:
-                                name = soup2.find("h2", {"data-dtype": "d3ifr"}).text
-                            except:
-                                name = ""
-                            try:
-                                type = soup2.find("span", class_="YhemCb").text
-                            except:
-                                type = ""
-                            try:
-                                horaire = soup2.find("table", class_="WgFkxc").text
-                            except:
-                                horaire = ""
-                            try:
-                                jours_semaine = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']
-                            except:
-                                jours_semaine = ""
+                            adr_complete = soup2.find("div", {"data-attrid": "kc:/location/location:address"}).text if soup2.find("div", {"data-attrid": "kc:/location/location:address"}) else ""
+                            name = soup2.find("h2", {"data-dtype": "d3ifr"}).text if soup2.find("h2", {"data-dtype": "d3ifr"}) else ""
+                            type = soup2.find("span", class_="YhemCb").text if soup2.find("span", class_="YhemCb") else ""
+                            horaire = soup2.find("table", class_="WgFkxc").text if soup2.find("table", class_="WgFkxc") else ""
+                            jours_semaine = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']
 
-                            try:
-                                pattern = rf'({"|".join(jours_semaine)})((?:\d{{2}}:\d{{2}}–\d{{2}}:\d{{2}}|Fermé))+'
-                                matches = re.findall(pattern, horaire)
-                                horaires = {jour: heures if "Fermé" not in heures else "Fermé" for jour, heures in matches}
-                                horaires_json = json.dumps(horaires, ensure_ascii=False)
-                            except:
-                                horaires_json = ""
-                            try:
-                                zip_code = adr_complete.split(",")[1].split(" ")[1]
-                            except:
-                                zip_code = ""
-                            try:
-                                city = adr_complete.split(",")[1].split(" ")[2]
-                            except:
-                                city = ""
+                            pattern = rf'({"|".join(jours_semaine)})((?:\d{{2}}:\d{{2}}–\d{{2}}:\d{{2}}|Fermé))+'
+                            matches = re.findall(pattern, horaire)
+                            horaires = {jour: heures if "Fermé" not in heures else "Fermé" for jour, heures in matches}
+                            horaires_json = json.dumps(horaires, ensure_ascii=False)
+
+                            zip_code = adr_complete.split(",")[1].split(" ")[1] if len(adr_complete.split(",")) > 1 else ""
+                            city = adr_complete.split(",")[1].split(" ")[2] if len(adr_complete.split(",")) > 1 else ""
+
                             image_url = ""
-                            try:
+                            if soup2.find("button", {"data-clid": "local-photo-browser"}):
                                 style = soup2.find("button", {"data-clid": "local-photo-browser"}).find("div").get("style")
                                 parts = style.split("url(")
                                 image_url = parts[1].strip(")\"'")
-                            except:
-                                img = "no"
-                            try:
-                                phone = soup2.find("span", class_="LrzXr zdqRlf kno-fv").text
-                            except:
-                                phone = ""
-                            try:
-                                web = soup2.find("a", class_="xFAlBc").text
-                            except:
-                                web = ""
-                            print(f"{name};{zip_code};{city};{adr_complete};{phone};{web};{horaires_json};{type};{image_url} ")
+
+                            phone = soup2.find("span", class_="LrzXr zdqRlf kno-fv").text if soup2.find("span", class_="LrzXr zdqRlf kno-fv") else ""
+                            web = soup2.find("a", class_="xFAlBc").text if soup2.find("a", class_="xFAlBc") else ""
+
                             MAG.append(name)
                             ZIP.append(zip_code)
                             CITY.append(city)
@@ -294,21 +263,10 @@ def submit_form_medium(request):
                             TYPE.append(type)
                             IMAGE.append(image_url)
                         except:
-                            print("erreur mag")
                             continue
             except Exception as e:
                 print(f"Erreur WebDriver : {e}")
 
-# response = HttpResponse()
-# response['Content-Disposition'] = 'attachment; filename=' + enseigne + '.csv'
-# writer = csv.writer(response)
-# writer.writerow(['Nom Magasin', 'Type', 'Adresse', 'Numero Tel'])
-# for (name, type, zip_code, city, adr_complete, phone, horaires_json, web, image_url) in zip(MAG, TYPE, ZIP, CITY, ADR, PHONE, HORAIRE, WEB, IMAGE):
-# writer.writerow([name, type, zip_code, city, adr_complete, phone, horaires_json, web, image_url])
-
-# return response
-
-        # Générer le fichier CSV
         file_name = f'{enseigne}_{ville}.csv'
         file_path = os.path.join('temp', file_name)
         if not os.path.exists('temp'):
@@ -319,7 +277,6 @@ def submit_form_medium(request):
             for (name, type, adr_complete, phone, horaires_json, web, image_url) in zip(MAG, TYPE, ADR, PHONE, HORAIRE, WEB, IMAGE):
                 writer.writerow([name, type, adr_complete, phone, horaires_json, web, image_url])
 
-        # Envoyer le fichier par email
         try:
             with get_connection(
                 host=settings.EMAIL_HOST,
@@ -337,7 +294,6 @@ def submit_form_medium(request):
                 email.attach_file(file_path)
                 email.send()
 
-            # Supprimer le fichier temporaire après l'envoi de l'email
             os.remove(file_path)
             return Response({"message": "Scraping réussi et résultats envoyés par email!"}, status=status.HTTP_200_OK)
         except Exception as e:
@@ -347,24 +303,20 @@ def submit_form_medium(request):
     return Response({"message": "Vous n'avez plus de tickets. Voulez-vous être redirigé vers la page de boutique ?"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
 def submit_form_prenium(request):
     user = request.user
 
-    # Ensure the user has a profile
     if not hasattr(user, 'profile'):
         Profile.objects.create(user=user)
 
     if user.profile.tickets >= 3:
         user.profile.tickets -= 3
         user.profile.save()
-        print("prenium")
         enseigne = request.data.get('brand')
         ville = request.data.get('city')
 
-        # Enregistrer l'historique
         History.objects.create(user=user, ville=ville, magasin=enseigne, nb_ticket_en_cours=user.profile.tickets, type_scrap='premium')
 
         url2 = "https://www.google.com/search?q=" + enseigne + "+" + ville + "&rlz=1C5GCEM_en&biw=1848&bih=968&tbm=lcl&ei=apkhZLSKGsbVkdUP1oabuAY&ved=0ahUKEwi058D5mvz9AhXGaqQEHVbDBmcQ4dUDCAg&uact=5&oq=" + enseigne + "+" + ville + "&gs_lcp=Cg1nd3Mtd2l6LWxvY2FsEAMyCAgAEIAEELEDMgUIABCABDIFCAAQgAQyBQgAEIAEMgUIABCABDIFCAAQgAQyBQgAEIAEMgUIABCABDIFCAAQgAQyBQgAEIAEOgcIABCKBRBDOgYIABAWEB46CwgAEIAEELEDEIMBOgoIABCKBRCxAxBDUP8KWOjchgFgjN6GAWgHcAB4AIABfIgB-AySAQQxOC4ymAEAoAEBsAEAwAEB&sclient=gws-wiz-local#rlfi=hd:;si:;mv:[[72.59981891874918,78.7458826694124],[24.315754054065685,-46.76192983058759]];start:{page}"
@@ -380,11 +332,7 @@ def submit_form_prenium(request):
         IMAGE = []
         EMAILS = []
 
-        options = FirefoxOptions()
-        options.add_argument("--headless")
-        service = FirefoxService()
-
-        with webdriver.Firefox(service=service, options=options) as driver:
+        with get_chrome_driver() as driver:
             try:
                 driver.get(url2)
                 time.sleep(1)
@@ -392,8 +340,6 @@ def submit_form_prenium(request):
                 back.click()
 
                 for page in pages:
-                    print("page")
-                    print(page)
                     driver.get(url2.format(page=page, ville=ville))
                     time.sleep(2)
                     soup = BeautifulSoup(driver.page_source, 'html.parser')
@@ -403,7 +349,6 @@ def submit_form_prenium(request):
                     stores = driver.find_elements(By.CSS_SELECTOR, "div[class='rllt__details']")
                     if stores_verif == []:
                         break
-                    print("------")
 
                     for x in range(23):
                         stores2 = driver.find_elements(By.CSS_SELECTOR, "div[class='rllt__details']")
@@ -412,58 +357,29 @@ def submit_form_prenium(request):
                             stores2[x].click()
                             soup2 = BeautifulSoup(driver.page_source, 'html.parser')
                             time.sleep(0.5)
-                            try:
-                                adr_complete = soup2.find("div", {"data-attrid": "kc:/location/location:address"}).text
-                            except:
-                                adr_complete = ""
-                            try:
-                                name = soup2.find("h2", {"data-dtype": "d3ifr"}).text
-                            except:
-                                name = ""
-                            try:
-                                type = soup2.find("span", class_="YhemCb").text
-                            except:
-                                type = ""
-                            try:
-                                horaire = soup2.find("table", class_="WgFkxc").text
-                            except:
-                                horaire = ""
-                            try:
-                                jours_semaine = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']
-                            except:
-                                jours_semaine = ""
+                            adr_complete = soup2.find("div", {"data-attrid": "kc:/location/location:address"}).text if soup2.find("div", {"data-attrid": "kc:/location/location:address"}) else ""
+                            name = soup2.find("h2", {"data-dtype": "d3ifr"}).text if soup2.find("h2", {"data-dtype": "d3ifr"}) else ""
+                            type = soup2.find("span", class_="YhemCb").text if soup2.find("span", class_="YhemCb") else ""
+                            horaire = soup2.find("table", class_="WgFkxc").text if soup2.find("table", class_="WgFkxc") else ""
+                            jours_semaine = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']
 
-                            try:
-                                pattern = rf'({"|".join(jours_semaine)})((?:\d{{2}}:\d{{2}}–\d{{2}}:\d{{2}}|Fermé))+'
-                                matches = re.findall(pattern, horaire)
-                                horaires = {jour: heures if "Fermé" not in heures else "Fermé" for jour, heures in matches}
-                                horaires_json = json.dumps(horaires, ensure_ascii=False)
-                            except:
-                                horaires_json = ""
-                            try:
-                                zip_code = adr_complete.split(",")[1].split(" ")[1]
-                            except:
-                                zip_code = ""
-                            try:
-                                city = adr_complete.split(",")[1].split(" ")[2]
-                            except:
-                                city = ""
+                            pattern = rf'({"|".join(jours_semaine)})((?:\d{{2}}:\d{{2}}–\d{{2}}:\d{{2}}|Fermé))+'
+                            matches = re.findall(pattern, horaire)
+                            horaires = {jour: heures if "Fermé" not in heures else "Fermé" for jour, heures in matches}
+                            horaires_json = json.dumps(horaires, ensure_ascii=False)
+
+                            zip_code = adr_complete.split(",")[1].split(" ")[1] if len(adr_complete.split(",")) > 1 else ""
+                            city = adr_complete.split(",")[1].split(" ")[2] if len(adr_complete.split(",")) > 1 else ""
+
                             image_url = ""
-                            try:
+                            if soup2.find("button", {"data-clid": "local-photo-browser"}):
                                 style = soup2.find("button", {"data-clid": "local-photo-browser"}).find("div").get("style")
                                 parts = style.split("url(")
                                 image_url = parts[1].strip(")\"'")
-                            except:
-                                img = "no"
-                            try:
-                                phone = soup2.find("span", class_="LrzXr zdqRlf kno-fv").text
-                            except:
-                                phone = ""
-                            try:
-                                web = soup2.find("a", class_="xFAlBc").text
-                            except:
-                                web = ""
-                            print(f"{name};{zip_code};{city};{adr_complete};{phone};{web};{horaires_json};{type};{image_url} ")
+
+                            phone = soup2.find("span", class_="LrzXr zdqRlf kno-fv").text if soup2.find("span", class_="LrzXr zdqRlf kno-fv") else ""
+                            web = soup2.find("a", class_="xFAlBc").text if soup2.find("a", class_="xFAlBc") else ""
+
                             MAG.append(name)
                             ZIP.append(zip_code)
                             CITY.append(city)
@@ -474,32 +390,20 @@ def submit_form_prenium(request):
                             TYPE.append(type)
                             IMAGE.append(image_url)
                         except:
-                            print("erreur mag")
                             continue
             except Exception as e:
                 print(f"Erreur WebDriver : {e}")
 
-        print(EMAILS)
-        # response = HttpResponse()
-        # response['Content-Disposition'] = 'attachment; filename=' + enseigne + '.csv'
-        # writer = csv.writer(response)
-        # writer.writerow(['Nom Magasin', 'Type', 'Adresse', 'Numero Tel', 'Horaires', 'Web', 'Image', 'Emails'])
-        # for (name, type, zip_code, city, adr_complete, phone, horaires_json, web, image_url, emails) in zip(MAG, TYPE, ZIP, CITY, ADR, PHONE, HORAIRE, WEB, IMAGE, EMAILS):
-        #     writer.writerow([name, type, zip_code, city, adr_complete, phone, horaires_json, web, image_url, emails])
-
-        # return response
-            # Générer le fichier CSV
         file_name = f'{enseigne}_{ville}_premium.csv'
         file_path = os.path.join('temp', file_name)
         if not os.path.exists('temp'):
             os.makedirs('temp')
         with open(file_path, 'w', newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerow(['Nom Magasin', 'Type', 'Adresse', 'Numero Tel', 'Horaires', 'Web', 'Image', 'Emails'])
+            writer.writerow(['Nom Magasin', 'Type', 'Adresse', 'Numero Tel', 'Horaires', 'Web', 'Image'])
             for (name, type, adr_complete, phone, horaires_json, web, image_url) in zip(MAG, TYPE, ADR, PHONE, HORAIRE, WEB, IMAGE):
                 writer.writerow([name, type, adr_complete, phone, horaires_json, web, image_url])
 
-        # Envoyer le fichier par email
         try:
             with get_connection(
                 host=settings.EMAIL_HOST,
@@ -517,14 +421,12 @@ def submit_form_prenium(request):
                 email.attach_file(file_path)
                 email.send()
 
-            # Supprimer le fichier temporaire après l'envoi de l'email
             os.remove(file_path)
             return Response({"message": "Scraping premium réussi et résultats envoyés par email!"}, status=status.HTTP_200_OK)
         except Exception as e:
             print(f"Erreur lors de l'envoi de l'email: {e}")
             return Response({"message": "Scraping premium réussi, mais l'envoi de l'email a échoué."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     return Response({"message": "Vous n'avez plus de tickets. Voulez-vous être redirigé vers la page de boutique ?"}, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 @api_view(['POST'])
@@ -546,11 +448,7 @@ def submit_form_basique(request):
     TYPE = []
     ADR = []
 
-    options = FirefoxOptions()
-    options.add_argument("--headless")
-    service = FirefoxService()
-
-    with webdriver.Firefox(service=service, options=options) as driver:
+    with get_chrome_driver() as driver:
         try:
             driver.get(url2)
             time.sleep(1)
