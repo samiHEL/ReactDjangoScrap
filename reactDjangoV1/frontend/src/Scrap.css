@@ -18,7 +18,7 @@
 
 .packages {
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
   width: 100%;
   max-width: 1200px;
   gap: 20px; /* Space between the three option tabs */
@@ -36,7 +36,7 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  transition: transform 0.3s ease, opacity 0.3s ease, order 0.3s ease;
+  transition: transform 0.3s ease, opacity 0.3s ease;
   cursor: pointer;
   flex: 1;
 }

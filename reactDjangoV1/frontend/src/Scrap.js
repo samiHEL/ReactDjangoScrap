@@ -137,7 +137,6 @@ const Scrap = ({ updateTickets }) => {
             }`}
             style={{
               transform: selectedPackage === index ? "scale(1.2)" : "scale(1)",
-              order: selectedPackage === index ? 1 : 0,
             }}
             onClick={() => handleViewMore(index)}
           >

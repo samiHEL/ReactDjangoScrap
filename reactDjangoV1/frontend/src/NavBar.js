@@ -13,9 +13,14 @@ const NavBar = ({ username, isLoggedIn, tickets, onLogout }) => {
   return (
     <div className="navbar">
       <div className="menu">
+        <Link to="/" className="nav-link app-name">SCRAP MY DATA</Link>
+      </div>
+      <div className="menu-center">
+        {isLoggedIn && `Bienvenue, ${username}! Vous avez ${tickets} tickets.`}
+      </div>
+      <div className="menu">
         {isLoggedIn ? (
           <>
-            <span className="nav-link">Bienvenue, {username}! Vous avez {tickets} tickets.</span>
             <Link to="/scrap" className="nav-link">Scrap</Link>
             <Link to="/contact" className="nav-link">Contact</Link>
             <Link to="/shop" className="nav-link">Shop</Link>

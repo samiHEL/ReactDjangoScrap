@@ -39,7 +39,7 @@ const Login = ({ onLogin }) => {
   return (
     <div className="login-page">
       <div className="login-left">
-        <h1>SCRAP MY DATA</h1>
+        <h1>Scrap4U</h1>
         <p>We do bla bla bla bla ...</p>
         <button className="learn-more-button">LEARN ABOUT US</button>
       </div>
