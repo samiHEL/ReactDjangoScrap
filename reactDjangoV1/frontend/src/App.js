@@ -16,10 +16,9 @@ import Cancel from "./Cancel";
 function App() {
   const [username, setUsername] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [tickets, setTickets] = useState(0); // Nouvel état pour les tickets
+  const [tickets, setTickets] = useState(0);
 
   useEffect(() => {
-    debugger;
     const token = localStorage.getItem('token');
     if (token) {
       axiosInstance.get('/api/user/', {
@@ -28,23 +27,20 @@ function App() {
         }
       })
       .then((response) => {
-        debugger;
         setUsername(response.data.username);
         setIsLoggedIn(true);
-        setTickets(response.data.tickets); // Mettre à jour les tickets
+        setTickets(response.data.tickets);
       })
       .catch((error) => {
-        debugger;
         console.error("Error fetching user:", error);
       });
     }
-  }, [tickets]);
+  }, []);
 
   const handleLogin = (username) => {
     setUsername(username);
     setIsLoggedIn(true);
 
-    // Récupérer les informations utilisateur après la connexion
     const token = localStorage.getItem("token");
     if (token) {
       axiosInstance
@@ -54,13 +50,11 @@ function App() {
           },
         })
         .then((response) => {
-          debugger;
           setUsername(response.data.username);
           setIsLoggedIn(true);
           setTickets(response.data.tickets);
         })
         .catch((error) => {
-          debugger;
           console.error("Error fetching user:", error);
         });
     }
@@ -76,52 +70,55 @@ function App() {
       localStorage.removeItem("token");
       setUsername("");
       setIsLoggedIn(false);
-      setTickets(0); // Réinitialiser les tickets lors de la déconnexion
+      setTickets(0);
     })
     .catch((error) => {
       alert("Logout failed: " + error.message);
     });
-};
-const updateTickets = (newTicketCount) => {
-  setTickets(newTicketCount); // Méthode pour mettre à jour les tickets
-};
+  };
+
+  const updateTickets = (newTicketCount) => {
+    setTickets(newTicketCount);
+  };
 
   return (
     <Router>
       <div className="background">
         <NavBar username={username} isLoggedIn={isLoggedIn} onLogout={handleLogout} tickets={tickets} />
-        <Routes>
-          <Route path="/" element={<LandingPage isLoggedIn={isLoggedIn} />} />
-          <Route path="/login" element={isLoggedIn ? <Navigate to="/scrap" replace /> : <Login onLogin={handleLogin} />} />
-          <Route path="/signup" element={isLoggedIn ? <Navigate to="/scrap" replace /> : <Signup />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route
-            path="/scrap"
-            element={
-              isLoggedIn ? (
-                <Scrap updateTickets={updateTickets} />
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
-          />
-          <Route path="/history" element={isLoggedIn ? <History /> : <Navigate to="/login" replace />} />
-          <Route
-            path="/shop"
-            element={
-              isLoggedIn ? (
-                <Shop updateTickets={updateTickets} />
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
-          />
-          <Route
-            path="/shop/success"
-            element={<Success updateTickets={updateTickets} />}
-          />
-          <Route path="/shop/cancel" element={<Cancel />} />
+        <div className="content">
+          <Routes>
+            <Route path="/" element={<LandingPage isLoggedIn={isLoggedIn} />} />
+            <Route path="/login" element={isLoggedIn ? <Navigate to="/scrap" replace /> : <Login onLogin={handleLogin} />} />
+            <Route path="/signup" element={isLoggedIn ? <Navigate to="/scrap" replace /> : <Signup />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route
+              path="/scrap"
+              element={
+                isLoggedIn ? (
+                  <Scrap updateTickets={updateTickets} />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route path="/history" element={isLoggedIn ? <History /> : <Navigate to="/login" replace />} />
+            <Route
+              path="/shop"
+              element={
+                isLoggedIn ? (
+                  <Shop updateTickets={updateTickets} />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/shop/success"
+              element={<Success updateTickets={updateTickets} />}
+            />
+            <Route path="/shop/cancel" element={<Cancel />} />
           </Routes>
+        </div>
       </div>
     </Router>
   );

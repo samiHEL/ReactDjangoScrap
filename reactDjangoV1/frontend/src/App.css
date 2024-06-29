@@ -1,8 +1,12 @@
-/* Styles existants */
 body, html {
   height: 100%;
   margin: 0;
   font-family: Arial, sans-serif;
+}
+
+.app-container {
+  position: relative;
+  z-index: 1;
 }
 
 .background {
@@ -29,54 +33,19 @@ body, html {
   }
 }
 
-.form-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  position: relative;
-  z-index: 1;
-}
-
-.form-box {
-  background: rgba(255, 255, 255, 0.8);
-  padding: 40px;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  width: 300px;
-  z-index: 1;
-}
-
-input, button {
-  display: block;
-  width: 100%;
-  padding: 10px;
-  margin: 10px 0;
-  border-radius: 20px;
-  border: none;
-  outline: none;
-  transition: transform 0.2s;
-}
-
-button:hover {
-  transform: scale(1.1);
-}
-
-button:focus {
-  transform: scale(1.1);
-}
-
 .navbar {
   display: flex;
   justify-content: space-between;
   padding: 10px 20px;
   z-index: 2;
+  background-color: #1c1c1e;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .app-name {
   font-size: 24px;
   font-weight: bold;
-  color: #553125;
+  color: #ffa500;
   padding: 10px 20px;
   border: 3px solid #23a6d5;
   border-radius: 10px;
@@ -99,6 +68,14 @@ button:focus {
   text-decoration: none;
   color: white;
   font-size: 18px;
+}
+
+.content {
+  padding-top: 30px; /* Adjust this value for more space at the top */
+  padding-bottom: 60px; /* Adjust this value for more space at the bottom */
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: calc(100vh - 120px); /* Ensure the content area takes the full height of the viewport */
 }
 
 .loader,
@@ -138,6 +115,7 @@ button:focus {
   height: 100vh;
   text-align: center;
   color: #fff;
+  padding: 40px; /* Add padding to the top and bottom */
 }
 
 .landing-page h1 {

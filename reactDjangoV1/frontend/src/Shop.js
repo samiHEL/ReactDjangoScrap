@@ -43,25 +43,28 @@ const Shop = ({ updateTickets }) => {
 
   return (
     <div className="shop-container">
-      <h1>Acheter des tickets</h1>
+      <div className="shop-header">
+        <h1>Get Your Tickets</h1>
+        <p>Choose the best plan for your scraping needs and enjoy exclusive features.</p>
+      </div>
       <div className="shop-cards">
         <div className="shop-card">
           <h2>5 Tickets</h2>
-          <p>Testez les versions de scraping medium et premium avec 5 tickets.</p>
+          <p>Try out the medium and premium scraping versions with 5 tickets.</p>
           <div className="price">4.99€</div>
-          <button onClick={() => handleBuyTickets(5)}>Acheter</button>
+          <button onClick={() => handleBuyTickets(5)}>Buy Now</button>
         </div>
         <div className="shop-card">
           <h2>15 Tickets</h2>
-          <p>Testez les versions de scraping medium et premium avec 15 tickets.</p>
+          <p>Test medium and premium scraping versions with 15 tickets.</p>
           <div className="price">14.99€</div>
-          <button onClick={() => handleBuyTickets(15)}>Acheter</button>
+          <button onClick={() => handleBuyTickets(15)}>Buy Now</button>
         </div>
         <div className="shop-card">
           <h2>30 Tickets</h2>
-          <p>Testez les versions de scraping medium et premium avec 30 tickets.</p>
+          <p>Experience medium and premium scraping versions with 30 tickets.</p>
           <div className="price">29.99€</div>
-          <button onClick={() => handleBuyTickets(30)}>Acheter</button>
+          <button onClick={() => handleBuyTickets(30)}>Buy Now</button>
         </div>
       </div>
     </div>
