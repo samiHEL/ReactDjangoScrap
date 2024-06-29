@@ -329,7 +329,7 @@ def submit_form_medium(request):
                 use_tls=settings.EMAIL_USE_TLS
             ) as connection:
                 subject = 'Résultats de votre scraping'
-                message = f'Bonjour {user.username},\n\nVoici les résultats de votre scraping pour {enseigne} à {ville}.'
+                message = f'Bonjour {user.username},\n\nVoici les résultats de votre scraping premium pour {enseigne} à {ville}.'
                 email_from = settings.EMAIL_HOST_USER
                 recipient_list = [user.email]
 
@@ -592,18 +592,55 @@ def submit_form_basique(request):
                     ADR.append(adr)
                     PHONE.append(tel)
 
-            response = HttpResponse()
-            response['Content-Disposition'] = 'attachment; filename=' + enseigne + '.csv'
-            writer = csv.writer(response)
-            writer.writerow(['Nom Magasin', 'Type', 'Adresse', 'Numero Tel'])
-            for (name, type, adr, phone) in zip(MAG, TYPE, ADR, PHONE):
-                writer.writerow([name, type, adr, phone])
+            # response = HttpResponse()
+            # response['Content-Disposition'] = 'attachment; filename=' + enseigne + '.csv'
+            # writer = csv.writer(response)
+            # writer.writerow(['Nom Magasin', 'Type', 'Adresse', 'Numero Tel'])
+            # for (name, type, adr, phone) in zip(MAG, TYPE, ADR, PHONE):
+            #     writer.writerow([name, type, adr, phone])
 
-            return response
+            # return response
+
+            # Générer le fichier CSV
+            file_name = f'{enseigne}_{ville}_basique.csv'
+            file_path = os.path.join('temp', file_name)
+            if not os.path.exists('temp'):
+                os.makedirs('temp')
+            with open(file_path, 'w', newline='', encoding='utf-8') as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow(['Nom Magasin', 'Type', 'Adresse', 'Numero Tel'])
+                for (name, type, adr, phone) in zip(MAG, TYPE, ADR, PHONE):
+                    writer.writerow([name, type, adr, phone])
+
+            # Envoyer le fichier par email
+            try:
+                with get_connection(
+                    host=settings.EMAIL_HOST,
+                    port=settings.EMAIL_PORT,
+                    username=settings.EMAIL_HOST_USER,
+                    password=settings.EMAIL_HOST_PASSWORD,
+                    use_tls=settings.EMAIL_USE_TLS
+                ) as connection:
+                    subject = 'Résultats de votre scraping basique'
+                    message = f'Bonjour {user.username},\n\nVoici les résultats de votre scraping basique pour {enseigne} à {ville}.'
+                    email_from = settings.EMAIL_HOST_USER
+                    recipient_list = [user.email]
+
+                    email = EmailMessage(subject, message, email_from, recipient_list, connection=connection)
+                    email.attach_file(file_path)
+                    email.send()
+
+                # Supprimer le fichier temporaire après l'envoi de l'email
+                os.remove(file_path)
+                return Response({"message": "Scraping basique réussi et résultats envoyés par email!"}, status=status.HTTP_200_OK)
+            except Exception as e:
+                print(f"Erreur lors de l'envoi de l'email: {e}")
+                return Response({"message": "Scraping basique réussi, mais l'envoi de l'email a échoué."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         except Exception as e:
             print(f"Erreur WebDriver : {e}")
             return JsonResponse({"message": "Code mal exécuté"})
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_info(request):
@@ -613,3 +650,35 @@ def get_user_info(request):
         'tickets': user.profile.tickets,  # Assurez-vous que ce champ existe dans votre modèle User
     }
     return Response(response_data)
+
+@api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([AllowAny])
+def contact(request):
+    user = request.user
+    name = request.data.get('name')
+    subject = request.data.get('subject')
+    message = request.data.get('message')
+
+    if not name or not subject or not message:
+        return Response({"message": "Tous les champs sont requis."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        with get_connection(
+            host=settings.EMAIL_HOST,
+            port=settings.EMAIL_PORT,
+            username=settings.EMAIL_HOST_USER,
+            password=settings.EMAIL_HOST_PASSWORD,
+            use_tls=settings.EMAIL_USE_TLS
+        ) as connection:
+            email_subject = f"Scrap4you: {subject}"
+            email_body = f"Message de {name}, ({user.email}):\n\n{message}"
+            email_from = settings.EMAIL_HOST_USER
+            recipient_list = [settings.EMAIL_HOST_USER]
+
+            email = EmailMessage(email_subject, email_body, email_from, recipient_list, headers={'Reply-To': user.email}, connection=connection)
+            email.send()
+
+        return Response({"message": "Votre message a été envoyé avec succès!"}, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"message": f"Une erreur s'est produite lors de l'envoi de l'email: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

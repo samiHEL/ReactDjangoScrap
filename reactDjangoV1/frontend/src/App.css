@@ -1,4 +1,5 @@
-body, html {
+body,
+html {
   height: 100%;
   margin: 0;
   font-family: Arial, sans-serif;
@@ -64,7 +65,8 @@ body, html {
   gap: 20px;
 }
 
-.menu a, .menu span {
+.menu a,
+.menu span {
   text-decoration: none;
   color: white;
   font-size: 18px;
@@ -75,7 +77,9 @@ body, html {
   padding-bottom: 60px; /* Adjust this value for more space at the bottom */
   max-width: 1200px;
   margin: 0 auto;
-  min-height: calc(100vh - 120px); /* Ensure the content area takes the full height of the viewport */
+  min-height: calc(
+    100vh - 120px
+  ); /* Ensure the content area takes the full height of the viewport */
 }
 
 .loader,
@@ -135,7 +139,7 @@ body, html {
 
 #company-name:hover {
   transform: scale(1.1);
-  color: #36D7B7;
+  color: #36d7b7;
 }
 
 .landing-page button {
@@ -199,7 +203,7 @@ body, html {
 }
 
 .glow-on-hover:before {
-  content: '';
+  content: "";
   position: absolute;
   top: -2px;
   left: -2px;
@@ -210,7 +214,7 @@ body, html {
   height: calc(100% + 4px);
   animation: glowing 20s linear infinite;
   opacity: 0;
-  transition: opacity .3s ease-in-out;
+  transition: opacity 0.3s ease-in-out;
   border-radius: 10px;
 }
 
@@ -228,7 +232,7 @@ body, html {
 
 .glow-on-hover:after {
   z-index: -1;
-  content: '';
+  content: "";
   position: absolute;
   width: 100%;
   height: 100%;
@@ -239,7 +243,13 @@ body, html {
 }
 
 @keyframes glowing {
-  0% { background-position: 0 0; }
-  50% { background-position: 400% 0; }
-  100% { background-position: 0 0; }
+  0% {
+    background-position: 0 0;
+  }
+  50% {
+    background-position: 400% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
 }

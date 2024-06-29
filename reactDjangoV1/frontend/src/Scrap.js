@@ -4,14 +4,34 @@ import axiosInstance from "./axiosConfig";
 import "./Scrap.css";
 
 const Scrap = ({ updateTickets }) => {
-  const [brand, setBrand] = useState("");
-  const [city, setCity] = useState("");
+  const [brandBasique, setBrandBasique] = useState("");
+  const [cityBasique, setCityBasique] = useState("");
+  const [brandMedium, setBrandMedium] = useState("");
+  const [cityMedium, setCityMedium] = useState("");
+  const [brandPremium, setBrandPremium] = useState("");
+  const [cityPremium, setCityPremium] = useState("");
   const [loading, setLoading] = useState(false);
   const [scrapType, setScrapType] = useState("");
   const [selectedPackage, setSelectedPackage] = useState(null);
   const navigate = useNavigate();
 
   const handleSubmit = () => {
+    let brand, city;
+
+    switch (scrapType) {
+      case "medium":
+        brand = brandMedium;
+        city = cityMedium;
+        break;
+      case "premium":
+        brand = brandPremium;
+        city = cityPremium;
+        break;
+      default:
+        brand = brandBasique;
+        city = cityBasique;
+    }
+
     if (!brand || !city) {
       alert("Tous les champs doivent être remplis.");
       return;
@@ -61,8 +81,19 @@ const Scrap = ({ updateTickets }) => {
             .catch((error) => {
               console.error("Error fetching user:", error);
             });
+          // Vider le formulaire après le succès
+          setBrandBasique("");
+          setCityBasique("");
+          setBrandMedium("");
+          setCityMedium("");
+          setBrandPremium("");
+          setCityPremium("");
+          setScrapType("");
+          setSelectedPackage(null);
         } else {
-          alert("Erreur: la réponse du serveur n'est pas conforme aux attentes.");
+          alert(
+            "Erreur: la réponse du serveur n'est pas conforme aux attentes."
+          );
         }
         setLoading(false);
       })
@@ -95,9 +126,11 @@ const Scrap = ({ updateTickets }) => {
     {
       title: "Scrap Basique",
       subtitle: "Basic scrapping options",
-      price: "1 tickets/scrap",
-      description: "Basic scrapping with limited features. Suitable for small tasks.",
-      details: "Includes basic scrapping features with limited usage. Great for small tasks and personal use.",
+      price: "Free",
+      description:
+        "Basic scrapping with limited features. Suitable for small tasks.",
+      details:
+        "Includes basic scrapping features with limited usage. Great for small tasks and personal use.",
       type: "basique",
     },
     {
@@ -105,15 +138,17 @@ const Scrap = ({ updateTickets }) => {
       subtitle: "Standard scrapping options",
       price: "2 tickets/scrap",
       description: "Standard scrapping with more features and higher limits.",
-      details: "Includes standard scrapping features with higher usage limits. Ideal for moderate tasks and small businesses.",
+      details:
+        "Includes standard scrapping features with higher usage limits. Ideal for moderate tasks and small businesses.",
       type: "medium",
     },
     {
       title: "Scrap Premium",
       subtitle: "Premium scrapping options",
-      price: "5 tickets/scrap",
+      price: "3 tickets/scrap",
       description: "Premium scrapping with all features and highest limits.",
-      details: "Includes all scrapping features with the highest usage limits. Perfect for large tasks and enterprises.",
+      details:
+        "Includes all scrapping features with the highest usage limits. Perfect for large tasks and enterprises.",
       type: "premium",
     },
   ];
@@ -132,7 +167,11 @@ const Scrap = ({ updateTickets }) => {
           <div
             key={index}
             className={`package-card ${
-              selectedPackage === index ? "selected" : selectedPackage !== null ? "blurred" : ""
+              selectedPackage === index
+                ? "selected"
+                : selectedPackage !== null
+                ? "blurred"
+                : ""
             }`}
             style={{
               transform: selectedPackage === index ? "scale(1.2)" : "scale(1)",
@@ -149,20 +188,48 @@ const Scrap = ({ updateTickets }) => {
                 <div className="form-box" onClick={(e) => e.stopPropagation()}>
                   <input
                     type="text"
-                    value={brand}
-                    onChange={(e) => setBrand(e.target.value)}
+                    value={
+                      scrapType === "basique"
+                        ? brandBasique
+                        : scrapType === "medium"
+                        ? brandMedium
+                        : brandPremium
+                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (scrapType === "basique") setBrandBasique(value);
+                      else if (scrapType === "medium") setBrandMedium(value);
+                      else setBrandPremium(value);
+                    }}
                     placeholder="Enseigne à scraper"
                   />
                   <input
                     type="text"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
+                    value={
+                      scrapType === "basique"
+                        ? cityBasique
+                        : scrapType === "medium"
+                        ? cityMedium
+                        : cityPremium
+                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (scrapType === "basique") setCityBasique(value);
+                      else if (scrapType === "medium") setCityMedium(value);
+                      else setCityPremium(value);
+                    }}
                     placeholder="Nom de la Ville"
                   />
                   <button onClick={handleSubmit} disabled={loading}>
                     Submit
                   </button>
-                  {loading && <img src="/images/ninja.gif" alt="Loading..." className="loading-gif" />}
+                  {loading && (
+                    <img
+                      src="/images/ninja.gif"
+                      alt="Loading..."
+                      className="loading-gif"
+                    />
+                  )}
                 </div>
               </>
             )}
