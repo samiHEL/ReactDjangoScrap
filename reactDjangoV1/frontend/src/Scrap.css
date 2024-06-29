@@ -1,3 +1,9 @@
+.loading-gif {
+  width: 50px; /* Adjust the size as needed */
+  height: 50px;
+  margin-top: 20px;
+}
+
 .scrap-page {
   display: flex;
   flex-direction: column;
@@ -91,6 +97,7 @@ button {
 button:hover {
   background-color: #ff8c00;
 }
+
 
 .form-box {
   background: rgba(255, 255, 255, 0.1); /* Semi-transparent background for form */

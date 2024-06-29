@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "./axiosConfig";
 import "./Scrap.css";
-import { BeatLoader } from "react-spinners";
 
 const Scrap = ({ updateTickets }) => {
   const [brand, setBrand] = useState("");
@@ -163,7 +162,7 @@ const Scrap = ({ updateTickets }) => {
                   <button onClick={handleSubmit} disabled={loading}>
                     Submit
                   </button>
-                  {loading && <BeatLoader size={15} color={"#36D7B7"} />}
+                  {loading && <img src="/images/ninja.gif" alt="Loading..." className="loading-gif" />}
                 </div>
               </>
             )}
